@@ -11,7 +11,7 @@ import time
 from scipy.sparse import lil_matrix
 
 
-base_cam = {'A':0,'B':1,'C':2}
+base_cam = {'A':0,'B':1,'C':2} #make a dictionary that convert camera index from string to integer
 
 #==================load image from videos 
 for path in Source_video_List:
@@ -19,10 +19,10 @@ for path in Source_video_List:
 
 
 #==================load pixel data to a dictionary
-pixelCoord = {}
+pixelCoord = {} #define a dictiionary which will hold pixel data for each camera
 if include_ball:
     for path in Pixel_coord_FIlE_List_include_ball:
-        skeleton = np.load(path[0])[:1450]
+        skeleton = np.load(path[0])[:1450] #this part is for testing purpose, 1450 is the frame number for testing video
         ball = np.load(path[1],allow_pickle = True)
         ball = ball.astype(float)
         ball = ball.reshape((1450,1,3))
@@ -32,8 +32,10 @@ if include_ball:
 
 else:
     for path in Pixel_coord_FIlE_List:
-        pixelCoord[path[1]] = np.load(path[0],allow_pickle = True)
-        pixelCoord[path[1]] = pixelCoord[path[1]][start_frame:start_frame+Len_of_frame,:,:]
+        pixelCoord[path[1]] = np.load(path[0],allow_pickle = True) 
+        pixelCoord[path[1]] = pixelCoord[path[1]][start_frame:start_frame+Len_of_frame,:,:] 
+    
+    #at the end, we get a dictionart which each key is the camera name, for example pixelCoord['CamA'] = (frame,#of points,xyz) np array
 
 
 
@@ -41,9 +43,13 @@ else:
 
 #================== calibrate the cameras
 
+#load camera matrix, Translaton vector, rotation vector
 _,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx('CalibrationData/CamB_Calibration/*.jpg','B',video_resolution)
+#mtx,tvecs and rvecs has same length as how many images we used to calibrate the camera. We only need the first one. They all identical.
 tvec_CamB,rvec_CamB = B_tvecs[0],B_rvecs[0]
+#convert rotation vector to its matrix form
 RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
+#combine rotation matrix and translation vector as a 4by4 homogenies transformation matrix
 H_CamB = R_t2H(RoMat_B,tvec_CamB)
 
 _,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx('CalibrationData/CamA_Calibration/*.jpg','A',video_resolution)
@@ -61,10 +67,14 @@ if num_of_cameras == 3:
 
 #=====================prepare proj matrix and pixel coords
 
-
+#the transformation matrx of the principle camera will be a 4by4 diagonal matrix, if cam A is the principle camera, MA is a 4by4 diagonal
+#matrix and MB,MC describe the position of CamB and CamC correspond to CamA
 if base_Cam_Index == 'A' and num_of_cameras == 3:
+ 
     MA,MB,MC = get_TransMat(H_CamA,H_CamB,H_CamC)
+    # projection matrix = camera matrix * transformation matrix
     PA,PB,PC = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC)
+    # stack points and projection matrix for points triangulation
     Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']),axis = 2)
     Proj_Mat = np.stack((PA,PB,PC),axis=0)
     #BA_points2D = np.vstack((pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']))
@@ -97,7 +107,8 @@ elif base_Cam_Index == 'B' and num_of_cameras == 2:
     Proj_Mat = np.stack((PB,PA),axis=0)
     #BA_points2D = np.vstack((pixelCoord['CamB'],pixelCoord['CamA']))
 
-
+#triangulate points and return a list which tells each point is visiable to which cameras (we assume priciple camera can always see every
+#points, an additional camera with best view will be used to reconstruct 3D
 coords,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
 coords = coords[:,:,:-1]
 
@@ -109,12 +120,14 @@ if include_ball:
 
 input_points = skeleton_points.reshape((-1,))
 if num_of_cameras == 3:
+    #just a different format of stacking all pixel coordinates, sparse bundle adjustment need flattenn all data
     BA_points2D = np.stack((pixelCoord['CamA'][:,:,:-1],pixelCoord['CamB'][:,:,:-1],pixelCoord['CamC'][:,:,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel()))
 elif num_of_cameras == 2:
     BA_points2D = np.stack((pixelCoord['CamA'][:,:-1,:-1],pixelCoord['CamB'][:,:-1,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel()))
 
+#final input of sparse bundle ajustment
 ba_input = np.hstack((input_points,input_param))
 
 
@@ -127,20 +140,32 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
     """
 
     def fun(ba_input):
-        p = ba_input[:Len_of_frame*3*points_inFrame].reshape((-1,points_inFrame,3)) #reshape back to(len,25,3)
+        """
+        function that reproject 3d points back to 2D points, calculate the error (reproject 2d - real 2d)
+        """
+        #reshape points back to (len,25,3)
+        p = ba_input[:Len_of_frame*3*points_inFrame].reshape((-1,points_inFrame,3)) 
+        #extract projection matrixs from input
         param = ba_input[Len_of_frame*points_inFrame*3:]
 
         temp = np.ones((p.shape[0],p.shape[1],1))
+        #attach 1 to the end to the 3d points so it becomes homogenies coordinate
         x = np.concatenate((p,temp),axis=2)
+        #define an array that will hold true pixel data
         true_pixel_coord = np.zeros((2*Len_of_frame,points_inFrame,2))
 
         if num_of_cameras == 2:
             l = len(param)//2
+            #reshape projection matrix back to (3,4) 
             ProjMats = (param[:l].reshape((3,4)),param[l:].reshape((3,4)))
+            #first half of true pixel data must come from the principle camera
             true_pixel_coord[:Len_of_frame] = points2d[base_cam[base_Cam_Index]]
+            #reprojected 2d = 3D * projection matrix
             reproj1 = x.dot(ProjMats[base_cam[base_Cam_Index]].T)
+            #define an array that will hold second half of reprojected 3d. they are projected to one of the camera excepts principle cam
             reproj2 = np.zeros((Len_of_frame,points_inFrame,3))
             for i in range(Len_of_frame):
+                #reprojected 2d = 3D * projection matrix, we picked each of projection based on the visiable cam list we got from triangulation
                 reproj2[i] = x[i].dot(ProjMats[VIS_cam_List[i]].T)
                 true_pixel_coord[Len_of_frame+i] = points2d[VIS_cam_List[i]][i]
             
@@ -155,10 +180,11 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
                 reproj2[i] = x[i].dot(ProjMats[VIS_cam_List[i]].T)
                 true_pixel_coord[Len_of_frame+i] = points2d[VIS_cam_List[i]][i]
             
-            
+        #stack reprojected 2d   
         reproj_points = np.vstack((reproj1,reproj2))
- 
+        #devide x,y by z 
         reproj_points = reproj_points[:,:,:2] / reproj_points[:,:,2,np.newaxis]
+        #calculate the error term
         res = (reproj_points-true_pixel_coord)
 
         return res.ravel()
@@ -167,12 +193,14 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
     def bundle_adjustment_sparsity(n_point3D):
         """
         n_observation:total length of pixel coordinates
+        define a sparsity matrix. 1 if the jaccobian matrix has value, else 0
 
         """
         m = n_point3D * 2 * 2 #row
         n = n_point3D * 3 + 12*num_of_cameras #col 
         A = lil_matrix((m, n), dtype=int)
-
+        
+        #fill out projection matrix
         if num_of_cameras == 2:
             if base_Cam_Index == 'A':
                 A[:m//2,-24:-12] = 1
@@ -196,6 +224,8 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
                     A[2*i,s1:] = 1
                 else:
                     A[2*i+1,s1:s2] = 1 
+        
+        #===============fill out points
 
         for i in range(n_point3D):
             for s in range(3):
@@ -209,34 +239,37 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
         return A
     
     
-    
+    #residual before bundle adjustment
     residual = fun(ba_input)
-    
+    #generate sparisty mat
     A = bundle_adjustment_sparsity(Len_of_frame*points_inFrame)
     plt.plot(residual)
     plt.show()
 
     x0 = ba_input
-
+    
     t0 = time.time()
+    #optimizing
     res = least_squares(fun,x0,jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf')
     #res = least_squares(fun,x0, verbose=2, x_scale='jac', ftol=1e-4, method='trf')
     t1 = time.time()
     print("Optimization took {0:.0f} seconds".format(t1 - t0))
-
+    #plot residual after optimization
     plt.plot(res.fun)
     plt.show()
-
+    
+    #extract optimized 3d points and projection matrix
     param = res.x
-    print(param.shape)
-    optimized_3D = param[:Len_of_frame*3*points_inFrame]
 
+    #extract 3d points and reshape
+    optimized_3D = param[:Len_of_frame*3*points_inFrame]
     coords = optimized_3D.reshape((-1,points_inFrame,3))
 
     return coords
 
 print("optimization started")
 
+#C is the optimizaed 3d pooints
 C = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
 #print('coords shape',optimized_coords.shape)
 np.save(SAVE_FOLDER+'output_3d.npy',C)
