@@ -9,7 +9,15 @@ from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
+from VideoProcess import runOPandDLC
+from Parse_dlc import Parse_dlc
+from Parse_OpenPose import Parse_OpenPose
 
+
+#=====================Run OpenPose and DeepLabCut and parse through the output
+runOPandDLC()
+Parse_dlc()
+Parse_OpenPose()
 
 base_cam = {'A':0,'B':1,'C':2} #make a dictionary that convert camera index from string to integer
 
