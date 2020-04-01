@@ -1,19 +1,22 @@
 import pandas as pd 
 import numpy as np 
-
+import glob 
+import os
+from config import baseProjectPath, subject, sessionID
         
 def Parse_dlc():
-    path = baseProjectPath+'/'+subject+'/'+sessionID+'/DeepLabCut/'
+    path = baseProjectPath+'/'+subject+'/'+sessionID+'Raw/DeepLabCut/'
  
     if not os.path.exists(path + 'DLCnpy'):
         os.mkdir(path+ 'DLCnpy')
     
-
+    pathLength = len(path)
+    print(pathLength)
     csvfile = glob.glob(path+'/*csv')
     
     for data in csvfile: 
         
-        cam_name  = data[56:]
+        cam_name  = data[pathLength:]
         cam_name = cam_name[:4]
        
         value = pd.read_csv(data) 
