@@ -4,7 +4,7 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,SAVE_FOLDER,start_frame,Source_video_List,Pixel_coord_FIlE_List,SourceVideoFolder,Source_video_List,include_ball,Pixel_coord_FIlE_List_include_ball,points_inFrame
+from config import base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,SAVE_FOLDER,start_frame,Source_video_List,Pixel_coord_FIlE_List,SourceVideoFolder,Source_video_List,include_ball,Pixel_coord_FIlE_List_include_ball,points_inFrame, baseProjectPath,subject,sessionID
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
@@ -18,6 +18,17 @@ from Parse_OpenPose import Parse_OpenPose
 runOPandDLC()
 Parse_dlc()
 Parse_OpenPose()
+
+#=====================Get files for dlc and openpose data 
+rootOPFolder = baseProjectPath+'/'+subject+'/'+sessionID+'/OpenPose/OpenPoseOutPut/'
+rootDLCFolder = baseProjectPath+'/'+subject+'/'+sessionID+'/DeepLabCut/DLCnpy/'
+
+Pixel_coord_FIlE_List = [['OP_CamA.npy','CamA'],
+                         ['OP_CamB.npy','CamB']]
+
+Pixel_coord_FIlE_List_include_ball = [['OP_CamA.npy','dlc_CamA.npy','CamA'],
+                                        ['OP_CamB.npy','dlc_CamB.npy','CamB']]
+
 
 base_cam = {'A':0,'B':1,'C':2} #make a dictionary that convert camera index from string to integer
 

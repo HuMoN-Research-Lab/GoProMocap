@@ -3,38 +3,45 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import os 
+from config import baseProjectPath, subject, sessionID
+import glob
 
 
 def Parse_OpenPose():
-    fileDict = baseProjectPath+'/'+subject+'/'+sessionID+'/Openpose/' #Openpose pixel coord data file path
+    
+    OPfileDict = baseProjectPath+'/'+subject+'/'+sessionID+'/Intermediate/Openpose/' #Openpose pixel coord data file path
+    fileDict = baseProjectPath+'/'+subject+'/'+sessionID+'/Intermediate/'
+
     if not os.path.exists( fileDict+'OpenPoseOutput'):
         os.mkdir(fileDict+'OpenPoseOutput')
-
-#fileDict ='214OP_data/CamB_OpenPoseOutput' #Openpose pixel coord data file path
-#ret = []
-
-    openPoseOutputFolders = glob.glob(fileDict+'/*')
+    outputfileDict = fileDict + 'OpenPoseOutput'
+    openPoseOutputFolders = glob.glob(OPfileDict+'/*')
 
     for cam in openPoseOutputFolders:
+        cam_name = cam[len(OPfileDict):]
+
         ret = []
-        for f in os.listdir(cam):
-            inputFile = open(os.path.join(fileDict,cam)) #open json file
+        for f in os.listdir(cam):   
+            inputFile = open(os.path.join(cam,f)) #open json file
             data = json.load(inputFile) #load json content
             inputFile.close() #close the input file
-
-
-            skeleton = np.array(data['people'][-1]['pose_keypoints_2d']).reshape((-1,3))
-            #hand_left = np.array(data['people'][-1]["hand_left_keypoints_2d"]).reshape((-1,3))
-            hand_right = np.array(data['people'][-1]["hand_right_keypoints_2d"]).reshape((-1,3))
-    
-
-            d = np.concatenate((skeleton,hand_right),axis = 0)
-            ret.append(skeleton)
-
+            try:
+                skeleton = np.array(data['people'][-1]['pose_keypoints_2d']).reshape((-1,3))
+                #hand_left = np.array(data['people'][-1]["hand_left_keypoints_2d"]).reshape((-1,3))
+                hand_right = np.array(data['people'][-1]["hand_right_keypoints_2d"]).reshape((-1,3))
+              
+                 
+                d = np.concatenate((skeleton,hand_right),axis = 0)
+                ret.append(skeleton)
+            except IndexError:
+                a = np.empty((25,3))
+                a[:] = np.nan
+                ret.append(a)
+        
         ret = np.array(ret)
         #should be (1451,46,3)
         print(ret.shape)
-        np.save(fileDict+'OpenPoseOutput/OP_'+cam_num+'.npy',ret)
-
+        np.save(outputfileDict+'/OP_'+cam_name+'.npy',ret)
+Parse_OpenPose()
 
 
