@@ -8,6 +8,13 @@
 
 __author__ = 'Yifan'
 
+subject = 'CJC'
+sessionID = 'JugglingPractice0004_20200326'
+DLCconfigPath = 'D:Juggling/DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
+rawVideoFolder = 'Checkerboard'
+baseProjectPath = 'D:Juggling' 
+
+
 num_of_cameras = 2   #only support 2 and 3 rn
 base_Cam_Index = 'A'    #A/B/C
 video_resolution = (1280,960) #specified resized video size # decide from video
