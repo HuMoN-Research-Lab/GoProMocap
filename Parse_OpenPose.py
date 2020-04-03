@@ -42,6 +42,6 @@ def Parse_OpenPose():
         #should be (1451,46,3)
         print(ret.shape)
         np.save(outputfileDict+'/OP_'+cam_name+'.npy',ret)
-Parse_OpenPose()
+
 
 

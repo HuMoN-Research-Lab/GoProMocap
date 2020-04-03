@@ -5,13 +5,13 @@ import os
 from config import baseProjectPath, subject, sessionID
         
 def Parse_dlc():
-    path = baseProjectPath+'/'+subject+'/'+sessionID+'Raw/DeepLabCut/'
+    path = baseProjectPath+'/'+subject+'/'+sessionID+'/Intermediate/DeepLabCut/'
  
     if not os.path.exists(path + 'DLCnpy'):
         os.mkdir(path+ 'DLCnpy')
     
     pathLength = len(path)
-    print(pathLength)
+    
     csvfile = glob.glob(path+'/*csv')
     
     for data in csvfile: 
@@ -23,4 +23,4 @@ def Parse_dlc():
         BallMotion = value.iloc[3:,7:10].values#the last element in the array is the P value
 
         print(BallMotion.shape)
-        np.save(baseProjectPath+'/'+subject+'/'+sessionID+'/DeepLabCut/DLCnpy/dlc_'+cam_name+'.npy',BallMotion)
+        np.save(path+'DLCnpy/dlc_'+cam_name+'.npy',BallMotion)
