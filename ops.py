@@ -10,8 +10,9 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from config import video_resolution,SourceVideoFolder,num_of_cameras
+from config import video_resolution,num_of_cameras, baseProjectPath,subject,sessionID
 
+SourceVideoFolder = baseProjectPath+'/'+subject+'/'+sessionID+'/Raw/CheckerBoard'
 
 
 
@@ -19,7 +20,7 @@ class Exceptions(Exception):
     pass
 
 
-def get_TransMat(base_H,H1,H2=None):
+def get_TransMat(base_H,H1,H2=None,H3=None):
     """
     calculate homogeneous transformation matrix between base Cam and the other cameras
     and calculate the projection matrix of all cameras
@@ -34,13 +35,25 @@ def get_TransMat(base_H,H1,H2=None):
     
     if num_of_cameras == 2 :
         return M_base,M1
-    else:
+    elif num_of_cameras == 3:
         H_base_2 = H2.dot(inverseH(base_H))
         T2 = H_base_2[:3,-1].reshape(3,1)
         R2 = H_base_2[:3,:3]
         M2 = np.hstack((R2, T2))
 
         return M_base,M1,M2
+    elif num_of_cameras == 4:
+        H_base_2 = H2.dot(inverseH(base_H))
+        T2 = H_base_2[:3,-1].reshape(3,1)
+        R2 = H_base_2[:3,:3]
+        M2 = np.hstack((R2, T2))
+
+        H_base_3 = H3.dot(inverseH(base_H))
+        T3 = H_base_3[:3,-1].reshape(3,1)
+        R3 = H_base_3[:3,:3]
+        M3 = np.hstack((R3, T3))
+
+        return M_base,M1,M2,M3
 
 
 
@@ -143,6 +156,7 @@ def video_loader(fileName,Cam_Indx):
     for dir in datadir:
         for video in os.listdir(dir):
             if video == fileName:
+                
                 vidcap = cv2.VideoCapture(os.path.join(dir,video))
                 success,image = vidcap.read()
                 count = 0
@@ -156,7 +170,7 @@ def video_loader(fileName,Cam_Indx):
                         #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                         #single_video.append(image)
                         if count < 20:
-                            cv2.imwrite("CalibrationData/"+Cam_Indx+"_Calibration/frame%d.jpg" % count, resize)     # save frame as JPEG file
+                            cv2.imwrite("Calibration/"+Cam_Indx+"_Calibration/frame%d.jpg" % count, resize)     # save frame as JPEG file
                             print(resize.shape)
                         else:
                             break
