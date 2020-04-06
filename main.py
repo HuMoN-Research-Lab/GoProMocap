@@ -356,10 +356,6 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
 print("optimization started")
 
 C,M = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
-#print('coords shape',optimized_coords.shape)
-
-np.save(basePath+'/Processed/output_3d.npy',C)
-print('save sussesful')
 
 if include_ball:
     l = len(M)//num_of_cameras
@@ -385,7 +381,9 @@ if include_ball:
 
     C = np.concatenate((C,ball_points),axis=-2)
 
-print(C.shape)
+np.save(basePath+'/Processed/output_3d.npy',C)
+print('save sussesful')
+
 
 if num_of_cameras == 3:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],C).display()
