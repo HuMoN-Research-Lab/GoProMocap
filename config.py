@@ -12,18 +12,18 @@ __author__ = 'Yifan'
 ##############################################################################
 # The Videos you are processing should be saved in the following way:
 # BaseProjectPath/Subject/sessionID/Raw and in the Raw folder there should be a folder for RawVideos and raw checkerboard 
+#Save Videos as CamA, CamB, CamC, CamD.  If more than one part save as CamA_part1, CamA_part2...
 
-
-baseProjectPath = 'D:Juggling' 
+baseProjectPath = 'C:Users/chris/JugglingProject' 
 subject = 'CJC'
-sessionID = 'JugglingPractice0001_20200318'
+sessionID = 'JugglingPractice0005_20200331'
 rawVideoFolder = 'Checkerboard'
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
 
 #If the go pro videos get cut into two videos 
-num_of_Video_parts = 1
+num_of_Video_parts = 2
 
 num_of_cameras = 4  #only support 2 and 3 rn
 base_Cam_Index = 'A'    #A/B/C

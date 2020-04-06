@@ -3,27 +3,24 @@ import subprocess
 import deeplabcut
 from config import subject, sessionID, DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts
 
-#Set file path details
-#subject = 'CJC'
-#sessionID = 'JugglingPractice0001_20200318'
-#configPath = 'D:Juggling/DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
 
 def runOPandDLC():
-    #Set directory, and original filepath 
+    #Set directory
     os.chdir("/Windows/system32")
-
+    #Sets the file path to the where the videos are stored
     origfilepath = baseProjectPath+'/' +subject + '/' + sessionID 
     rawfilepath = baseProjectPath+'/' +subject + '/' + sessionID + '/Raw'
 
-    #Create main filepath for Intermediate processed 
+    ################Create folders for each step of process###############
+    #Create filepath for Intermediate processed 
     if not os.path.exists(origfilepath + '/Intermediate'):
         os.mkdir(origfilepath + '/Intermediate')
     interfilepath = origfilepath + '/Intermediate'
-
+    #Create filepath for Processed Data
     if not os.path.exists(origfilepath + '/Processed'):
         os.mkdir(origfilepath + '/Processed')
      
-   
+    #Create directory for raw videos
     datadir1 = [rawfilepath+'/'+rawVideoFolder]
 
     #Create a folder for the resized videos
@@ -32,7 +29,7 @@ def runOPandDLC():
     filepath1 = interfilepath + '/Resized'
     datadir2 = [filepath1]
 
-    #Create a folder for the resized videos
+    #Create a folder for the undistorted videos
     if not os.path.exists(interfilepath + '/Undistorted'):
         os.mkdir(interfilepath + '/Undistorted')
     filepath2 = interfilepath + '/Undistorted'
@@ -54,54 +51,71 @@ def runOPandDLC():
         os.mkdir(interfilepath+'/VideoOutput')
     filepath5 = interfilepath+'/VideoOutput'
 
-
-    for dir in datadir1:
+    ###################### Resize Videos ##################################
+    for dir in datadir1: # for loop parses through the raw video folder
         for video in os.listdir(dir):
+            #
             subprocess.call(['ffmpeg', '-i', rawfilepath+'/'+rawVideoFolder+'/'+video, '-vf', 'scale=1280:960', filepath1+'/'+video])
 
-    #Use ffmpeg to resize videos and save them in the just created resized video folder
-    
-    #camBvids = open(filepath1+'/camBvids.txt','a')
-    #camCvids = open(filepath1+'/camCvids.txt','a')
-    #camDvids = open(filepath1+'/camDvids.txt','a')
-    #if num_of_Video_parts >1 :
-     #   for dir in datadir1:
-     #       for video in os.listdir(dir):
-      #          if video[:4] == 'CamA':
-      #              camAvids = open(filepath1+'/camAvids.txt','a')
-     #               camAvids.write('CamA')                   
-      #          if video[:4] == 'CamB':
-       #             camBvids.write(filepath1+'/'+video)                    
-       #         if video[:4] == 'CamC':
-       #             camCvids.write(filepath1+'/'+video)
-        #        if video[:4] == 'CamD':
-         #           camDvids.write(filepath1+'/'+video)
-                    
 
-       # subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camAvids.txt', '-c' ,'copy' ,filepath1+'/CamA.mp4'])
-        #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camBvids.txt', '-c' ,'copy' ,filepath1+'/CamB.mp4'])
-        #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camCvids.txt', '-c' ,'copy' ,filepath1+'/CamC.mp4'])
-        #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camDvids.txt', '-c' ,'copy' ,filepath1+'/CamD.mp4'])
+    ####################### Join video parts together ###################### 
+    if num_of_Video_parts >1 :
+        #create a text file for each camera 
+        camAvids = open(filepath1+'/camAvids.txt','a')
+        camBvids = open(filepath1+'/camBvids.txt','a')
+        camCvids = open(filepath1+'/camCvids.txt','a')
+        camDvids = open(filepath1+'/camDvids.txt','a')
+        for dir in datadir2: #for loop parses through the resized video folder 
+            for video in os.listdir(dir): 
+                if video[:4] == 'CamA': # if the video is from CamA
+                    camAvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    camAvids.write('\n')                     
+                if video[:4] == 'CamB': # if the video is from CamB
+                    camBvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    camBvids.write('\n')                   
+                if video[:4] == 'CamC': # if the video is from CamC
+                    camCvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    camCvids.write('\n') 
+                if video[:4] == 'CamD': # if the video is from CamD
+                    camDvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    camDvids.write('\n')                     
+        #Close the text files
+        camAvids.close()
+        camBvids.close()
+        camCvids.close()
+        camDvids.close()
+        #Use ffmpeg to join all parts of the video together
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camAvids.txt', '-c' ,'copy' ,filepath1+'/CamA.mp4'])
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camBvids.txt', '-c' ,'copy' ,filepath1+'/CamB.mp4'])
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camCvids.txt', '-c' ,'copy' ,filepath1+'/CamC.mp4'])
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camDvids.txt', '-c' ,'copy' ,filepath1+'/CamD.mp4'])
 
 
-    #Use ffmpeg to Undistort videos
-    for dir in datadir2:
+    #################### Undistortion #########################
+    if num_of_Video_parts ==1: #If there is just one part to video, the entire resized folder is undistorted
+        for dir in datadir2:
+            for video in os.listdir(dir):
+                subprocess.call(['ffmpeg', '-i', filepath1+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath2+'/'+video])
+    if num_of_Video_parts >1:# If there is multiple parts originally, only the videos in the folder that are joined together are undistorted
+        for dir in datadir2:
+            for video in os.listdir(dir):
+                if len(video) == 8:
+                    subprocess.call(['ffmpeg', '-i', filepath1+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath2+'/'+video])
+
+         
+    #################### DeepLabCut ############################
+    for dir in datadir3:# Loop through the undistorted folder
         for video in os.listdir(dir):
-            subprocess.call(['ffmpeg', '-i', filepath1+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath2+'/'+video])
-
-    #Use deeplabcut to analyze videos and save the results to the folder for processed videos     
-
-    for dir in datadir3:
-        for video in os.listdir(dir):
-           
+            #Analyze the videos through deeplabcut
             deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [filepath2 +'/'+ video],videotype='mp4', destfolder = filepath3, save_as_csv = True)
             deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[filepath2 +'/'+ video],videotype= 'mp4', destfolder = filepath3)
           #  deeplabcut.create_labeled_video(DLCconfigPath,[filepath2 +'/'+ video],videotype = 'mp4', destfolder = filepath5)
 
-    #Change directory to openpose and run openpose on the videos then save the results to the processed video folder
-
-    os.chdir("/Users/MatthisLab/openpose")
-    for dir in datadir3:
+    
+    ###################### OpenPose ##########################   
+    os.chdir("/Users/MatthisLab/openpose") # change the directory to openpose
+    for dir in datadir3:# loop through undistorted folder
         for video in os.listdir(dir):
-            videoName = video[:4]
+            videoName = video[:4] 
             subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+videoName+'.avi',  '--write_json', filepath4+'/'+videoName])
+runOPandDLC()
