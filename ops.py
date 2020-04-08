@@ -10,10 +10,12 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from config import video_resolution,num_of_cameras, baseProjectPath,subject,sessionID
+from config import video_resolution,num_of_cameras,checkerVideoFolder, rawVideoFolder, checkerboardVid
 
-SourceVideoFolder = baseProjectPath+'/'+subject+'/'+sessionID+'/Raw/CheckerBoard'
-
+if checkerboardVid == True:
+    SourceVideoFolder = checkerVideoFolder
+else: 
+    SourceVideoFolder = rawVideoFolder
 
 
 class Exceptions(Exception):

@@ -1,24 +1,24 @@
 import os
 import subprocess
 import deeplabcut
-from config import subject, sessionID, DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts
+from config import subject, sessionID, DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath
 
 
 def runOPandDLC():
     #Set directory
     os.chdir("/Windows/system32")
     #Sets the file path to the where the videos are stored
-    origfilepath = baseProjectPath+'/' +subject + '/' + sessionID 
-    rawfilepath = baseProjectPath+'/' +subject + '/' + sessionID + '/Raw'
+    
+    rawfilepath = baseFilePath+ '/Raw'
 
     ################Create folders for each step of process###############
     #Create filepath for Intermediate processed 
-    if not os.path.exists(origfilepath + '/Intermediate'):
-        os.mkdir(origfilepath + '/Intermediate')
-    interfilepath = origfilepath + '/Intermediate'
+    if not os.path.exists(baseFilePath + '/Intermediate'):
+        os.mkdir(baseFilePath + '/Intermediate')
+    interfilepath = baseFilePath + '/Intermediate'
     #Create filepath for Processed Data
-    if not os.path.exists(origfilepath + '/Processed'):
-        os.mkdir(origfilepath + '/Processed')
+    if not os.path.exists(baseFilePath + '/Processed'):
+        os.mkdir(baseFilePath + '/Processed')
      
     #Create directory for raw videos
     datadir1 = [rawfilepath+'/'+rawVideoFolder]

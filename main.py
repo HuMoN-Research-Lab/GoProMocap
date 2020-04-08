@@ -4,7 +4,7 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_ball,points_inFrame,baseProjectPath,subject,sessionID
+from config import base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_ball,points_inFrame, baseFilePath,checkerVideoFolder, rawVideoFolder, checkerboardVid
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
@@ -12,7 +12,7 @@ from scipy.sparse import lil_matrix
 from VideoProcess import runOPandDLC
 from Parse_dlc import Parse_dlc
 from Parse_OpenPose import Parse_OpenPose
-
+import subprocess
 
 #=====================Run OpenPose and DeepLabCut and parse through the output
 #runOPandDLC()
@@ -20,9 +20,12 @@ from Parse_OpenPose import Parse_OpenPose
 #Parse_OpenPose()
 
 #========================Get source video
-basePath = baseProjectPath+'/'+subject+'/'+sessionID
-SourceVideoFolder = basePath+'/'+'Raw/Checkerboard'
+if checkerboardVid == True:
+    SourceVideoFolder = checkerVideoFolder
+else: 
+    SourceVideoFolder = rawVideoFolder
 
+#
 if num_of_cameras ==2:
     Source_video_List = [['CamA.MP4','CamA'],['CamB.MP4','CamB']]
 if num_of_cameras ==3: 
@@ -31,8 +34,8 @@ if num_of_cameras ==4:
     Source_video_List= [['CamA.MP4','CamA'],['CamB.MP4','CamB'],['CamC.MP4','CamC'],['CamD.MP4','CamD']]
 
 #=====================Get files for dlc and openpose data 
-rootOPFolder = basePath+'/Intermediate/OpenPoseOutPut/'
-rootDLCFolder = basePath+'/Intermediate/DeepLabCut/DLCnpy/'
+rootOPFolder = baseFilePath+'/Intermediate/OpenPoseOutPut/'
+rootDLCFolder = baseFilePath+'/Intermediate/DeepLabCut/DLCnpy/'
 
 if num_of_cameras ==2:
     Pixel_coord_FIlE_List = [[rootOPFolder+'OP_CamA.npy','CamA'],
@@ -381,7 +384,7 @@ if include_ball:
 
     C = np.concatenate((C,ball_points),axis=-2)
 
-np.save(basePath+'/Processed/output_3d.npy',C)
+np.save(baseFilePath+'/Processed/DataPoints3D.npy',C)
 print('save sussesful')
 
 
@@ -394,3 +397,7 @@ elif num_of_cameras == 2:
 if num_of_cameras == 4:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],C).display()
 
+#============================Blender Animation
+#fileLoc = os.path.dirname(os.path.abspath(__file__))
+#os.chdir(fileLoc)
+#subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
