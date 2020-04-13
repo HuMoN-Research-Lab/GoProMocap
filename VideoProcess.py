@@ -1,10 +1,17 @@
 import os
 import subprocess
 import deeplabcut
-from config import subject, sessionID, DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath
+from config import DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath, cam_names
+
 
 
 def runOPandDLC():
+    #Set up camera names 
+    cam1 = cam_names[0]
+    cam2 = cam_names[1]
+    cam3 = cam_names[2]
+    cam4 = cam_names[3]
+
     #Set directory
     os.chdir("/Windows/system32")
     #Sets the file path to the where the videos are stored
@@ -21,7 +28,7 @@ def runOPandDLC():
         os.mkdir(baseFilePath + '/Processed')
      
     #Create directory for raw videos
-    datadir1 = [rawfilepath+'/'+rawVideoFolder]
+    datadir1 = [checkerVideoFolder]
 
     #Create a folder for the resized videos
     if not os.path.exists(interfilepath + '/Resized'):
@@ -55,52 +62,48 @@ def runOPandDLC():
     for dir in datadir1: # for loop parses through the raw video folder
         for video in os.listdir(dir):
             #
-            subprocess.call(['ffmpeg', '-i', rawfilepath+'/'+rawVideoFolder+'/'+video, '-vf', 'scale=1280:960', filepath1+'/'+video])
+            subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', 'scale=1280:960', filepath1+'/'+video])
 
 
     ####################### Join video parts together ###################### 
-    if num_of_Video_parts >1 :
-        #create a text file for each camera 
-        camAvids = open(filepath1+'/camAvids.txt','a')
-        camBvids = open(filepath1+'/camBvids.txt','a')
-        camCvids = open(filepath1+'/camCvids.txt','a')
-        camDvids = open(filepath1+'/camDvids.txt','a')
-        for dir in datadir2: #for loop parses through the resized video folder 
-            for video in os.listdir(dir): 
-                if video[:4] == 'CamA': # if the video is from CamA
-                    camAvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                    camAvids.write('\n')                     
-                if video[:4] == 'CamB': # if the video is from CamB
-                    camBvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                    camBvids.write('\n')                   
-                if video[:4] == 'CamC': # if the video is from CamC
-                    camCvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                    camCvids.write('\n') 
-                if video[:4] == 'CamD': # if the video is from CamD
-                    camDvids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                    camDvids.write('\n')                     
-        #Close the text files
-        camAvids.close()
-        camBvids.close()
-        camCvids.close()
-        camDvids.close()
-        #Use ffmpeg to join all parts of the video together
-        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camAvids.txt', '-c' ,'copy' ,filepath1+'/CamA.mp4'])
-        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camBvids.txt', '-c' ,'copy' ,filepath1+'/CamB.mp4'])
-        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camCvids.txt', '-c' ,'copy' ,filepath1+'/CamC.mp4'])
-        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/camDvids.txt', '-c' ,'copy' ,filepath1+'/CamD.mp4'])
+    #create a text file for each camera 
+    cam1vids = open(filepath1+'/cam1vids.txt','a')
+    cam2vids = open(filepath1+'/cam2vids.txt','a')
+    cam3vids = open(filepath1+'/cam3vids.txt','a')
+    cam4vids = open(filepath1+'/cam4vids.txt','a')
+    for dir in datadir2: #for loop parses through the resized video folder 
+        for video in os.listdir(dir): 
+            #Get length of the name of cameras
+            cam1length = len(cam1); cam2length = len(cam2); cam3length = cam3length; cam4length = len(cam4); 
+            if video[:cam1length] == cam1: # if the video is from Cam1
+                cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                cam1vids.write('\n')                     
+            if video[:cam2length] == cam2: # if the video is from Cam2
+                cam2vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                cam2vids.write('\n')                   
+            if video[:cam3length] == cam3: # if the video is from Cam3
+                cam3vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                cam3vids.write('\n') 
+            if video[:cam4length] == cam4: # if the video is from Cam4
+                cam4vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                cam4vids.write('\n')                     
+    #Close the text files
+    cam1vids.close()
+    cam2vids.close()
+    cam3vids.close()
+    cam4vids.close()
+    #Use ffmpeg to join all parts of the video together
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam1vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam1+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam2vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam2+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam3vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam3+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam4vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam4+'.mp4'])
 
 
     #################### Undistortion #########################
-    if num_of_Video_parts ==1: #If there is just one part to video, the entire resized folder is undistorted
-        for dir in datadir2:
-            for video in os.listdir(dir):
+    for dir in datadir2:
+        for video in os.listdir(dir):
+            if len(video) == 8:
                 subprocess.call(['ffmpeg', '-i', filepath1+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath2+'/'+video])
-    if num_of_Video_parts >1:# If there is multiple parts originally, only the videos in the folder that are joined together are undistorted
-        for dir in datadir2:
-            for video in os.listdir(dir):
-                if len(video) == 8:
-                    subprocess.call(['ffmpeg', '-i', filepath1+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath2+'/'+video])
 
          
     #################### DeepLabCut ############################

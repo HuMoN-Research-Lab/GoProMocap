@@ -22,27 +22,28 @@ subject = 'CJC'
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '20200407'
+date = '20200326'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0007'
+session_num = '0004'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'C:/Users/chris/JugglingProject'
+
+#Enter the Camera Names
+cam_names = ['CamA','CamB','CamC','CamD']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
 
 #If the checkerboard is NOT in the full video set this as True
-checkerboardVid = True
+checkerboardVid = False
 
-#If the go pro videos get cut into two videos 
-num_of_Video_parts = 2 #Could probably take this out 
-
-num_of_cameras = 4  #Supports up to 4
+#If the go pro videos get cut into two videos  
+num_of_cameras = 2  #Supports up to 4
 base_Cam_Index = 'A'    #A/B/C
 video_resolution = (1280,960) #specified resized video size # decide from video
-include_ball = True
+include_ball = False
 points_inFrame = 25
 
 
@@ -74,6 +75,6 @@ rawVideoFolder = rawData+'/RawGoProData'
 
 if not os.path.exists(rawData+'/Checkerboard'):
     os.mkdir(rawData+'/Checkerboard')
-checkerVideoFolder = rawData+'Checkerboard'
+checkerVideoFolder = rawData+'/Checkerboard'
 
 

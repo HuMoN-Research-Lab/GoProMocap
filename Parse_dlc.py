@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np 
 import glob 
 import os
-from config import baseProjectPath, subject, sessionID
+from config import baseFilePath
         
 def Parse_dlc():
-    path = baseProjectPath+'/'+subject+'/'+sessionID+'/Intermediate/DeepLabCut/'
+    path = baseFilePath+'/Intermediate/DeepLabCut/'
  
     if not os.path.exists(path + 'DLCnpy'):
         os.mkdir(path+ 'DLCnpy')

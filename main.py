@@ -4,7 +4,7 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_ball,points_inFrame, baseFilePath,checkerVideoFolder, rawVideoFolder, checkerboardVid
+from config import cam_names, base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_ball,points_inFrame, baseFilePath,checkerVideoFolder, rawVideoFolder, checkerboardVid
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
@@ -25,12 +25,16 @@ if checkerboardVid == True:
 else: 
     SourceVideoFolder = rawVideoFolder
 
-#
+#======================== Set up names for videos
+cam1 = cam_names[0]
+cam2 = cam_names[1]
 if num_of_cameras ==2:
-    Source_video_List = [['CamA.MP4','CamA'],['CamB.MP4','CamB']]
+    Source_video_List = [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2]]
 if num_of_cameras ==3: 
-    Source_video_List= [['CamA.MP4','CamA'],['CamB.MP4','CamB'],['CamC.MP4','CamC']]
+    cam3 = cam_names[2]
+    Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],['CamC.MP4','CamC']]
 if num_of_cameras ==4:
+    cam4 = cam_names[3]
     Source_video_List= [['CamA.MP4','CamA'],['CamB.MP4','CamB'],['CamC.MP4','CamC'],['CamD.MP4','CamD']]
 
 #=====================Get files for dlc and openpose data 
@@ -199,8 +203,9 @@ coords = coords[:,:,:-1]
 #===========sparse bundle adjustment
 if include_ball:
     ball_points = coords[:,-1,:].reshape((-1,1,3))
-    skeleton_points = coords[:,:-1,:]
 
+
+skeleton_points = coords[:,:-1,:]
 input_points = skeleton_points.reshape((-1,))
 
 
@@ -400,4 +405,4 @@ if num_of_cameras == 4:
 #============================Blender Animation
 #fileLoc = os.path.dirname(os.path.abspath(__file__))
 #os.chdir(fileLoc)
-#subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
+subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
