@@ -1,7 +1,7 @@
 import os
 import subprocess
 import deeplabcut
-from config import DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath, cam_names
+from config import DLCconfigPath, rawVideoFolder, baseProjectPath, baseFilePath, cam_names, checkerVideoFolder, checkerboardVid
 
 
 
@@ -28,7 +28,7 @@ def runOPandDLC():
         os.mkdir(baseFilePath + '/Processed')
      
     #Create directory for raw videos
-    datadir1 = [checkerVideoFolder]
+    datadir1 = [rawVideoFolder]
 
     #Create a folder for the resized videos
     if not os.path.exists(interfilepath + '/Resized'):
@@ -57,7 +57,7 @@ def runOPandDLC():
     if not os.path.exists(interfilepath+'/VideoOutput'):
         os.mkdir(interfilepath+'/VideoOutput')
     filepath5 = interfilepath+'/VideoOutput'
-
+    '''
     ###################### Resize Videos ##################################
     for dir in datadir1: # for loop parses through the raw video folder
         for video in os.listdir(dir):
@@ -74,7 +74,7 @@ def runOPandDLC():
     for dir in datadir2: #for loop parses through the resized video folder 
         for video in os.listdir(dir): 
             #Get length of the name of cameras
-            cam1length = len(cam1); cam2length = len(cam2); cam3length = cam3length; cam4length = len(cam4); 
+            cam1length = len(cam1); cam2length = len(cam2); cam3length = len(cam3); cam4length = len(cam4); 
             if video[:cam1length] == cam1: # if the video is from Cam1
                 cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
                 cam1vids.write('\n')                     
@@ -121,4 +121,29 @@ def runOPandDLC():
         for video in os.listdir(dir):
             videoName = video[:4] 
             subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+videoName+'.avi',  '--write_json', filepath4+'/'+videoName])
-runOPandDLC()
+    '''
+    ################################if you need To use checkerboard videos
+    
+    if checkerboardVid:
+        datadir5 = [checkerVideoFolder]
+        
+        if not os.path.exists(interfilepath + '/CheckerboardResized'):
+            os.mkdir(interfilepath + '/CheckerboardResized')
+        filepath6 = interfilepath + '/CheckerboardResized'
+        datadir6 = [filepath6]
+
+    #Create a folder for the undistorted videos
+        if not os.path.exists(interfilepath + '/CheckerboardUndistorted'):
+            os.mkdir(interfilepath + '/CheckerboardUndistorted')
+        filepath7 = interfilepath + '/CheckerboardUndistorted'
+
+        for dir in datadir5: # for loop parses through the raw video folder
+            for video in os.listdir(dir):
+                subprocess.call(['ffmpeg', '-i', checkerVideoFolder+'/'+video, '-vf', 'scale=1280:960', filepath6+'/'+video])
+
+        for dir in datadir6:
+            for video in os.listdir(dir):
+                subprocess.call(['ffmpeg', '-i', filepath6+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath7+'/'+video])
+        
+        
+

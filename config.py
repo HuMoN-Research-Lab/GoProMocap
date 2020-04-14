@@ -22,13 +22,13 @@ subject = 'CJC'
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '20200326'
+date = '20200318'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0004'
+session_num = '0001'
 
 #Base folder path where you would like to save the project to
-baseProjectPath = 'C:/Users/chris/JugglingProject'
+baseProjectPath = 'D:/Juggling'
 
 #Enter the Camera Names
 cam_names = ['CamA','CamB','CamC','CamD']
@@ -37,18 +37,18 @@ cam_names = ['CamA','CamB','CamC','CamD']
 DLCconfigPath = 'DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
 
 #If the checkerboard is NOT in the full video set this as True
-checkerboardVid = False
+checkerboardVid = True
 
 #If the go pro videos get cut into two videos  
-num_of_cameras = 2  #Supports up to 4
+num_of_cameras = 2 #Supports up to 4
 base_Cam_Index = 'A'    #A/B/C
 video_resolution = (1280,960) #specified resized video size # decide from video
-include_ball = False
+include_ball = True
 points_inFrame = 25
 
 
-Len_of_frame = 500 #how many frames you want to reconstruct 3d #whole video option
-start_frame = 20000
+Len_of_frame = 50 #how many frames you want to reconstruct 3d #whole video option
+start_frame = 300
 
 
 #END OF USER INPUT

@@ -21,9 +21,9 @@ import subprocess
 
 #========================Get source video
 if checkerboardVid == True:
-    SourceVideoFolder = checkerVideoFolder
+    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
-    SourceVideoFolder = rawVideoFolder
+    SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
 
 #======================== Set up names for videos
 cam1 = cam_names[0]
@@ -152,7 +152,7 @@ if num_of_cameras == 4:
         Proj_points = np.stack((pixelCoord['CamD'],pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']),axis = 2)
         Proj_Mat = np.stack((PD,PA,PB,PC),axis=0)
     
-    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1],pixelCoord['CamC'][:,:25,:-1],pixelCoord['CamD'][:,:25,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord['CamA'][:,:points_inFrame,:-1],pixelCoord['CamB'][:,:points_inFrame,:-1],pixelCoord['CamC'][:,:points_inFrame,:-1],pixelCoord['CamD'][:,:points_inFrame,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel(),Proj_Mat[3].ravel()))
 
 
@@ -176,7 +176,7 @@ elif num_of_cameras == 3:
         Proj_points = np.stack((pixelCoord['CamC'],pixelCoord['CamA'],pixelCoord['CamB']),axis = 2)
         Proj_Mat = np.stack((PC,PA,PB),axis=0)
     
-    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1],pixelCoord['CamC'][:,:25,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord['CamA'][:,:points_inFrame,:-1],pixelCoord['CamB'][:,:points_inFrame,:-1],pixelCoord['CamC'][:,:points_inFrame,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel()))
     
 elif num_of_cameras == 2:
@@ -192,7 +192,7 @@ elif num_of_cameras == 2:
         Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA']),axis = 2)
         Proj_Mat = np.stack((PB,PA),axis=0)
     
-    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord['CamA'][:,:points_inFrame,:-1],pixelCoord['CamB'][:,:points_inFrame,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel()))
 
 
@@ -362,7 +362,6 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
     return coords,Optimized_Proj_mat
 
 print("optimization started")
-
 C,M = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
 
 if include_ball:
@@ -405,4 +404,4 @@ if num_of_cameras == 4:
 #============================Blender Animation
 #fileLoc = os.path.dirname(os.path.abspath(__file__))
 #os.chdir(fileLoc)
-subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
+#subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])

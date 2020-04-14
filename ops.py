@@ -10,13 +10,12 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from config import video_resolution,num_of_cameras,checkerVideoFolder, rawVideoFolder, checkerboardVid
+from config import video_resolution,num_of_cameras,checkerVideoFolder, rawVideoFolder, checkerboardVid, baseFilePath
 
 if checkerboardVid == True:
-    SourceVideoFolder = checkerVideoFolder
+    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
-    SourceVideoFolder = rawVideoFolder
-
+    SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
 
 class Exceptions(Exception):
     pass
