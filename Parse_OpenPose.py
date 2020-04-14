@@ -42,20 +42,20 @@ def Parse_OpenPose():
                 LH = 0
                 for people in data['people']:
                     skeleton = np.array(people['pose_keypoints_2d']).reshape((-1,3))
-                    #hand_left = np.array(people["hand_left_keypoints_2d"]).reshape((-1,3))
-                    #hand_right = np.array(people["hand_right_keypoints_2d"]).reshape((-1,3))
+                    hand_left = np.array(people["hand_left_keypoints_2d"]).reshape((-1,3))
+                    hand_right = np.array(people["hand_right_keypoints_2d"]).reshape((-1,3))
                     distance = sum(sum(abs(target_skeleton-skeleton)))
                     if distance < c:
                         c = distance
                         res = skeleton 
-                        #HL = hand_left
-                        #HR = hand_right 
+                        HL = hand_left
+                        HR = hand_right 
                 target_skeleton = res
         
-                #d = np.concatenate((skeleton),axis = 0)
-                ret.append(skeleton)
+                d = np.concatenate((skeleton,HR,HL),axis = 0)
+                ret.append(d)
 
-            if (len(data['people'] )) ==0:
+            if len(data['people']) == 0:
                 a = np.empty((points_inFrame,3))
                 a[:] = np.nan
                 ret.append(a)
@@ -65,4 +65,5 @@ def Parse_OpenPose():
         print(ret.shape)
         np.save(outputfileDict+'/OP_'+cam_names[j]+'.npy',ret)
         j= j+1
-Parse_OpenPose()
+
+

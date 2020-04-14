@@ -1,7 +1,7 @@
 import os
 import subprocess
 import deeplabcut
-from config import DLCconfigPath, rawVideoFolder, baseProjectPath, baseFilePath, cam_names, checkerVideoFolder, checkerboardVid
+from config import DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath, cam_names, include_OpenPose
 
 
 

@@ -4,7 +4,7 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import cam_names, base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_ball,points_inFrame, baseFilePath,checkerVideoFolder, rawVideoFolder, checkerboardVid
+from config import cam_names, base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_DLC,points_inFrame, baseFilePath,checkerVideoFolder, rawVideoFolder, checkerboardVid
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
@@ -32,41 +32,41 @@ if num_of_cameras ==2:
     Source_video_List = [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2]]
 if num_of_cameras ==3: 
     cam3 = cam_names[2]
-    Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],['CamC.MP4','CamC']]
+    Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],[cam3+'.MP4',cam3]]
 if num_of_cameras ==4:
     cam4 = cam_names[3]
-    Source_video_List= [['CamA.MP4','CamA'],['CamB.MP4','CamB'],['CamC.MP4','CamC'],['CamD.MP4','CamD']]
+    Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],[cam3+'.MP4',cam3],[cam4+'.MP4',cam4]]
 
 #=====================Get files for dlc and openpose data 
 rootOPFolder = baseFilePath+'/Intermediate/OpenPoseOutPut/'
 rootDLCFolder = baseFilePath+'/Intermediate/DeepLabCut/DLCnpy/'
 
 if num_of_cameras ==2:
-    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_CamA.npy','CamA'],
-                             [rootOPFolder+'OP_CamB.npy','CamB']]
+    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],
+                             [rootOPFolder+'OP_'+cam2+'.npy',cam2]]
 
-    Pixel_coord_FIlE_List_include_ball = [[rootOPFolder+'OP_CamA.npy',rootDLCFolder+'dlc_CamA.npy','CamA'],
-                                          [rootOPFolder+'OP_CamB.npy',rootDLCFolder+'dlc_CamB.npy','CamB']]
+    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'OP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
+                                          [rootOPFolder+'OP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam2+'.npy',cam2]]
 if num_of_cameras ==3:
-    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_CamA.npy','CamA'],
-                             [rootOPFolder+'OP_CamB.npy','CamB'],
-                             [rootOPFolder+'OP_CamC.npy','CamC']]
+    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],
+                             [rootOPFolder+'OP_'+cam2+'.npy',cam2],
+                             [rootOPFolder+'OP_'+cam3+'.npy',cam3]]
                                                          
 
-    Pixel_coord_FIlE_List_include_ball = [[rootOPFolder+'OP_CamA.npy',rootDLCFolder+'dlc_CamA.npy','CamA'],
-                                          [rootOPFolder+'OP_CamB.npy',rootDLCFolder+'dlc_CamB.npy','CamB'],
-                                          [rootOPFolder+'OP_CamC.npy',rootDLCFolder+'dlc_CamC.npy','CamC']]
+    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'OP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
+                                          [rootOPFolder+'OP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam2],
+                                          [rootOPFolder+'OP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3]]
 if num_of_cameras ==4:
-    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_CamA.npy','CamA'],
-                             [rootOPFolder+'OP_CamB.npy','CamB'],
-                             [rootOPFolder+'OP_CamC.npy','CamC'],
-                             [rootOPFolder+'OP_CamD.npy','CamD']]
+    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],
+                             [rootOPFolder+'OP_'+cam2+'.npy',cam2],
+                             [rootOPFolder+'OP_'+cam3+'.npy',cam3],
+                             [rootOPFolder+'OP_'+cam4+'.npy',cam4]]
                                                          
 
-    Pixel_coord_FIlE_List_include_ball = [[rootOPFolder+'OP_CamA.npy',rootDLCFolder+'dlc_CamA.npy','CamA'],
-                                          [rootOPFolder+'OP_CamB.npy',rootDLCFolder+'dlc_CamB.npy','CamB'],
-                                          [rootOPFolder+'OP_CamC.npy',rootDLCFolder+'dlc_CamC.npy','CamC'],
-                                          [rootOPFolder+'OP_CamD.npy',rootDLCFolder+'dlc_CamC.npy','CamD']]
+    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'OP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
+                                          [rootOPFolder+'OP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam2+'.npy',cam2],
+                                          [rootOPFolder+'OP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3],
+                                          [rootOPFolder+'OP_'+cam4+'.npy',rootDLCFolder+'dlc_'+cam4+'.npy',cam4]]
 
 
 base_cam = {'A':0,'B':1,'C':2,'D':3}
@@ -78,8 +78,8 @@ for path in Source_video_List:
 
 #==================load pixel data to a dictionary
 pixelCoord = {}
-if include_ball:
-    for path in Pixel_coord_FIlE_List_include_ball:
+if include_DLC:
+    for path in Pixel_coord_FIlE_List_include_DLC:
         skeleton = np.load(path[0],allow_pickle = True)[start_frame:start_frame+Len_of_frame,:,:]
         ball = np.load(path[1],allow_pickle = True)[start_frame:start_frame+Len_of_frame,:]
         ball = ball.astype(float)
@@ -96,25 +96,25 @@ else:
 
 #================== calibrate the cameras
 
-_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx('Calibration/CamB_Calibration/*.jpg','B',video_resolution)
+_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx('Calibration/Cam2_Calibration/*.jpg','B',video_resolution)
 tvec_CamB,rvec_CamB = B_tvecs[0],B_rvecs[0]
 RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
 H_CamB = R_t2H(RoMat_B,tvec_CamB)
 
-_,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx('Calibration/CamA_Calibration/*.jpg','A',video_resolution)
+_,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx('Calibration/Cam1_Calibration/*.jpg','A',video_resolution)
 tvec_CamA,rvec_CamA = A_tvecs[0],A_rvecs[0]
 RoMat_A, _ = cv2.Rodrigues(rvec_CamA)
 H_CamA = R_t2H(RoMat_A,tvec_CamA)
 
 
 if num_of_cameras > 2:
-    _,K_CamC,C_dist,C_rvecs,C_tvecs = get_RT_mtx('Calibration/CamC_Calibration/*.jpg','C',video_resolution)
+    _,K_CamC,C_dist,C_rvecs,C_tvecs = get_RT_mtx('Calibration/Cam3_Calibration/*.jpg','C',video_resolution)
     tvec_CamC,rvec_CamC = C_tvecs[0],C_rvecs[0]
     RoMat_C, _ = cv2.Rodrigues(rvec_CamC)
     H_CamC = R_t2H(RoMat_C,tvec_CamC)
 
 if num_of_cameras > 3:
-    _,K_CamD,D_dist,D_rvecs,D_tvecs = get_RT_mtx('Calibration/CamD_Calibration/*.jpg','D',video_resolution)
+    _,K_CamD,D_dist,D_rvecs,D_tvecs = get_RT_mtx('Calibration/Cam4_Calibration/*.jpg','D',video_resolution)
     tvec_CamD,rvec_CamD = D_tvecs[0],D_rvecs[0]
     RoMat_D, _ = cv2.Rodrigues(rvec_CamD)
     H_CamD = R_t2H(RoMat_D,tvec_CamD)
@@ -201,7 +201,7 @@ coords = coords[:,:,:-1]
 
 
 #===========sparse bundle adjustment
-if include_ball:
+if include_DLC:
     ball_points = coords[:,-1,:].reshape((-1,1,3))
 
 
@@ -364,7 +364,7 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
 print("optimization started")
 C,M = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
 
-if include_ball:
+if include_DLC:
     l = len(M)//num_of_cameras
     
     if num_of_cameras == 2:
