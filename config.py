@@ -43,7 +43,8 @@ checkerboardVid = False
 num_of_cameras = 2  #Supports up to 4
 base_Cam_Index = 'A'    #A/B/C
 video_resolution = (1280,960) #specified resized video size # decide from video
-include_ball = False
+include_DLC = False
+include_OpenPose = True
 points_inFrame = 25
 
 

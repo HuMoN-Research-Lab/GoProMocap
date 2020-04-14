@@ -1,7 +1,7 @@
 import os
 import subprocess
 import deeplabcut
-from config import DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath, cam_names
+from config import DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath, cam_names, include_OpenPose
 
 
 
@@ -116,9 +116,10 @@ def runOPandDLC():
 
     
     ###################### OpenPose ##########################   
-    os.chdir("/Users/MatthisLab/openpose") # change the directory to openpose
-    for dir in datadir3:# loop through undistorted folder
-        for video in os.listdir(dir):
-            videoName = video[:4] 
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+videoName+'.avi',  '--write_json', filepath4+'/'+videoName])
+    if include_OpenPose:
+        os.chdir("/Users/MatthisLab/openpose") # change the directory to openpose
+        for dir in datadir3:# loop through undistorted folder
+            for video in os.listdir(dir):
+                videoName = video[:4] 
+                subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+videoName+'.avi',  '--write_json', filepath4+'/'+videoName])
 runOPandDLC()

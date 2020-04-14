@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np 
 import glob 
 import os
-from config import baseFilePath
+from config import baseFilePath, cam_names
         
 def Parse_dlc():
+
     path = baseFilePath+'/Intermediate/DeepLabCut/'
  
     if not os.path.exists(path + 'DLCnpy'):
@@ -13,7 +14,7 @@ def Parse_dlc():
     pathLength = len(path)
     
     csvfile = glob.glob(path+'/*csv')
-    
+    j = 0
     for data in csvfile: 
         
         cam_name  = data[pathLength:]
@@ -23,4 +24,5 @@ def Parse_dlc():
         BallMotion = value.iloc[3:,7:10].values#the last element in the array is the P value
 
         print(BallMotion.shape)
-        np.save(path+'DLCnpy/dlc_'+cam_name+'.npy',BallMotion)
+        np.save(path+'DLCnpy/dlc_'+cam_name[j]+'.npy',BallMotion)
+        j= j + 1
