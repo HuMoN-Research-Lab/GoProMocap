@@ -1,7 +1,8 @@
 import os
 import subprocess
 import deeplabcut
-from config import DLCconfigPath, rawVideoFolder, baseProjectPath, num_of_Video_parts,baseFilePath, cam_names, include_OpenPose
+from config import DLCconfigPath,  cam_names
+from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 
 
 
@@ -23,6 +24,7 @@ def runOPandDLC():
     if not os.path.exists(baseFilePath + '/Intermediate'):
         os.mkdir(baseFilePath + '/Intermediate')
     interfilepath = baseFilePath + '/Intermediate'
+
     #Create filepath for Processed Data
     if not os.path.exists(baseFilePath + '/Processed'):
         os.mkdir(baseFilePath + '/Processed')
@@ -57,7 +59,7 @@ def runOPandDLC():
     if not os.path.exists(interfilepath+'/VideoOutput'):
         os.mkdir(interfilepath+'/VideoOutput')
     filepath5 = interfilepath+'/VideoOutput'
-    '''
+
     ###################### Resize Videos ##################################
     for dir in datadir1: # for loop parses through the raw video folder
         for video in os.listdir(dir):
@@ -115,14 +117,16 @@ def runOPandDLC():
           #  deeplabcut.create_labeled_video(DLCconfigPath,[filepath2 +'/'+ video],videotype = 'mp4', destfolder = filepath5)
 
     
-    ###################### OpenPose ##########################   
+    ###################### OpenPose ######################################
     os.chdir("/Users/MatthisLab/openpose") # change the directory to openpose
+    j = 0
     for dir in datadir3:# loop through undistorted folder
         for video in os.listdir(dir):
-            videoName = video[:4] 
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+videoName+'.avi',  '--write_json', filepath4+'/'+videoName])
-    '''
-    ################################if you need To use checkerboard videos
+            subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', filepath4+'/'+cam_names[j]])
+            j = j +1
+    
+    
+    ###############If you need To use checkerboard videos##################
     
     if checkerboardVid:
         datadir5 = [checkerVideoFolder]

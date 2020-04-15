@@ -3,26 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import os 
-from config import baseFilePath, cam_names, include_OpenPoseFace, include_OpenPoseHands, include_OpenPoseSkeleton
+from config import baseFilePath, cam_names, points_inFrame
 import glob
 
-#========================================== Set Variable for amount of openpose points
-if include_OpenPoseFace:
-    points_from_face = 70
-else:
-    points_from_face = 0
-
-if include_OpenPoseHands:
-    points_from_Hands = 42
-else:
-    points_from_Hands = 0 
-
-if include_OpenPoseSkeleton:
-    points_from_skeleton = 25
-else:
-    points_from_skeleton = 0
-
-points_inFrame = points_from_skeleton + points_from_Hands + points_from_face
 
 def Parse_OpenPose():
     #Creat variables for file path
@@ -39,9 +22,9 @@ def Parse_OpenPose():
     openPoseOutputFolders = glob.glob(OPfileDict+'/*')
     
     #Create a list variable to store all frame numbers where there is no person in frame
-    noPersonInFrame =[]
+    empty_frame =[]
 
-
+    #
     for cam in openPoseOutputFolders:
         j = 0
         for f in os.listdir(cam):
@@ -49,7 +32,7 @@ def Parse_OpenPose():
             data = json.load(inputFile) #load json content
             inputFile.close() #close the input file
             if (len(data['people'] )) == 0: 
-                noPersonInFrame.append(j)
+                empty_frame.append(j)
             j = j +1
     k = 0
     for cam in openPoseOutputFolders:
@@ -67,31 +50,34 @@ def Parse_OpenPose():
             data = json.load(inputFile) #load json content
             inputFile.close() #close the input file
             j = j+1 
-            if j-1 in noPersonInFrame: 
-                a = np.empty((points_inFrame,3))
-                a[:] = np.nan
-                ret.append(a)
+            if j-1 in empty_frame: 
+                continue
             else:
-                if include_OpenPoseSkeleton:
+                c = 10000000000
+                res = 0
+                RH = 0
+                LH = 0
+                for people in data['people']:
                     skeleton = np.array(people['pose_keypoints_2d']).reshape((-1,3))
-                else: 
-                    skeleton = []
-                if include_OpenPoseHands:       
                     hand_left = np.array(people["hand_left_keypoints_2d"]).reshape((-1,3))
                     hand_right = np.array(people["hand_right_keypoints_2d"]).reshape((-1,3))
-                else:
-                    hand_left = []
-                    hand_right =[]
-                if include_OpenPoseFace:
-                    face = np.array(people["face_keypoints_2d"]).reshape((-1,3))
-                else:
-                    face = []
-                d = np.concatenate((skeleton,hand_left,hand_right, face),axis = 0)
+                    distance = sum(sum(abs(target_skeleton-skeleton)))
+                    if distance < c:
+                        c = distance
+                        res = skeleton 
+                        HL = hand_left
+                        HR = hand_right 
+                target_skeleton = res
+        
+                d = np.concatenate((skeleton,HR,HL),axis = 0)
                 ret.append(d)
 
         ret = np.array(ret)
+        #should be (1451,46,3)
         print(ret.shape)
         np.save(outputfileDict+'/OP_'+cam_names[k]+'.npy',ret)
         k  = k+1
-    return noPersonInFrame
+        print(k)
+    return empty_frame
 
+Parse_OpenPose()
