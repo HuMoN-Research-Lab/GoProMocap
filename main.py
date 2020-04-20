@@ -4,7 +4,7 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import cam_names, base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_DLC, checkerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton
+from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
@@ -32,11 +32,12 @@ input("Press enter when finished moving videos to correct folder")
 #Parse_dlc()
 
 #========================Get source video
-if checkerboardVid == True:
+if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
     SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
 
+fullVideoFolder = baseFilePath + '/Intermediate/Undistorted' #Always need to use this
 #======================== Set up names for videos
 cam1 = cam_names[0]
 cam2 = cam_names[1]
@@ -82,12 +83,24 @@ if num_of_cameras ==4:
                                           [rootOPFolder+'OP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3],
                                           [rootOPFolder+'OP_'+cam4+'.npy',rootDLCFolder+'dlc_'+cam4+'.npy',cam4]]
 
-base_cam = {'A':0,'B':1,'C':2,'D':3}
+if Len_of_frame == -1:
+    frameLengthAllCam = [] #create variable to stoe frame length
+    for dir in [fullVideoFolder]:
+        for video in os.listdir(dir):
+            vidcap = cv2.VideoCapture(os.path.join(dir,video))
+            frameLengthOneCam = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+            frameLengthAllCam.append(frameLengthOneCam)
+    
+    minVideo = frameLengthAllCam.index(min(frameLengthAllCam))  
+    shortestVideo = frameLengthAllCam[minVideo]
+    Len_of_frame = shortestVideo
 
+
+
+base_cam = {'A':0,'B':1,'C':2,'D':3}
 #==================load image from videos 
 for path in Source_video_List:
     video_loader(path[0],path[1])
-
 
 #==================load pixel data to a dictionary
 pixelCoord = {}
@@ -109,23 +122,23 @@ else:
 
 #================== calibrate the cameras
 
-_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],video_resolution)
+_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],(1280,960))
 tvec_CamB,rvec_CamB = B_tvecs[0],B_rvecs[0]
 RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
 H_CamB = R_t2H(RoMat_B,tvec_CamB)
 
-_,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[0]+'_Calibration/*jpg',cam_names[0],video_resolution)
+_,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[0]+'_Calibration/*jpg',cam_names[0],(1280,960))
 tvec_CamA,rvec_CamA = A_tvecs[0],A_rvecs[0]
 RoMat_A, _ = cv2.Rodrigues(rvec_CamA)
 H_CamA = R_t2H(RoMat_A,tvec_CamA)
 if num_of_cameras > 2:
-    _,K_CamC,C_dist,C_rvecs,C_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[2]+'_Calibration/*jpg',cam_names[2],video_resolution)
+    _,K_CamC,C_dist,C_rvecs,C_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[2]+'_Calibration/*jpg',cam_names[2],(1280,960))
     tvec_CamC,rvec_CamC = C_tvecs[0],C_rvecs[0]
     RoMat_C, _ = cv2.Rodrigues(rvec_CamC)
     H_CamC = R_t2H(RoMat_C,tvec_CamC)
 
 if num_of_cameras > 3:
-    _,K_CamD,D_dist,D_rvecs,D_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[3]+'_Calibration/*jpg',cam_names[3],video_resolution)
+    _,K_CamD,D_dist,D_rvecs,D_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[3]+'_Calibration/*jpg',cam_names[3],(1280,960))
     tvec_CamD,rvec_CamD = D_tvecs[0],D_rvecs[0]
     RoMat_D, _ = cv2.Rodrigues(rvec_CamD)
     H_CamD = R_t2H(RoMat_D,tvec_CamD)

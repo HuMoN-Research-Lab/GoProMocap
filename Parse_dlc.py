@@ -17,10 +17,12 @@ def Parse_dlc():
     csvfile = glob.glob(path+'/*csv')
 
     #For loop gets csv data from all cameras
+    j = 0
     for data in csvfile:     
         datapoints = pd.read_csv(data) # read in the csv data 
         parsedDlcData = datapoints.iloc[3:,7:10].values#the last element in the array is the P value
 
         print(parsedDlcData.shape)
         np.save(path+'DLCnpy/dlc_'+cam_names[j]+'.npy',parsedDlcData)#Save data
+        j = j+1
         

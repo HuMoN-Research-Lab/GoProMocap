@@ -1,7 +1,7 @@
 import os
 import subprocess
 import deeplabcut
-from config import DLCconfigPath,  cam_names
+from config import DLCconfigPath,  cam_names, useCheckerboardVid
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 
 
@@ -38,28 +38,36 @@ def runOPandDLC():
     filepath1 = interfilepath + '/Resized'
     datadir2 = [filepath1]
 
+    #Create a folder for joined videos 
+    if not os.path.exists(interfilepath+'/CombinedVideo'):
+        os.mkdir(interfilepath+'/CombinedVideo')
+    filepath2 = interfilepath+'/CombinedVideo'
+
     #Create a folder for the undistorted videos
     if not os.path.exists(interfilepath + '/Undistorted'):
         os.mkdir(interfilepath + '/Undistorted')
-    filepath2 = interfilepath + '/Undistorted'
-    datadir3 = [filepath2]
+    filepath3 = interfilepath + '/Undistorted'
+    datadir3 = [filepath3]
 
     #Create a folder for the deeplabcut output
     if not os.path.exists(interfilepath + '/DeepLabCut'):
         os.mkdir(interfilepath + '/DeepLabCut')
-    filepath3 = interfilepath + '/DeepLabCut'
-    datadir4 = [filepath3]
+    filepath4 = interfilepath + '/DeepLabCut'
+    datadir4 = [filepath4]
 
     #Create a folder for the openpose output
     if not os.path.exists(interfilepath + '/OpenPose'):
         os.mkdir(interfilepath + '/OpenPose')
-    filepath4 = interfilepath + '/OpenPose'
+    filepath5 = interfilepath + '/OpenPose'
 
     #Create a folder for videos
     if not os.path.exists(interfilepath+'/VideoOutput'):
         os.mkdir(interfilepath+'/VideoOutput')
-    filepath5 = interfilepath+'/VideoOutput'
+    filepath6 = interfilepath+'/VideoOutput'
 
+    
+    
+    '''
     ###################### Resize Videos ##################################
     for dir in datadir1: # for loop parses through the raw video folder
         for video in os.listdir(dir):
@@ -95,26 +103,25 @@ def runOPandDLC():
     cam3vids.close()
     cam4vids.close()
     #Use ffmpeg to join all parts of the video together
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam1vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam1+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam2vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam2+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam3vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam3+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam4vids.txt', '-c' ,'copy' ,filepath1+'/'+ cam4+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam1vids.txt', '-c' ,'copy' ,filepath2+'/'+ cam1+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam2vids.txt', '-c' ,'copy' ,filepath2+'/'+ cam2+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam3vids.txt', '-c' ,'copy' ,filepath2+'/'+ cam3+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath1+'/cam4vids.txt', '-c' ,'copy' ,filepath2+'/'+ cam4+'.mp4'])
 
 
     #################### Undistortion #########################
     for dir in datadir2:
         for video in os.listdir(dir):
-            if len(video) == 8:
-                subprocess.call(['ffmpeg', '-i', filepath1+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath2+'/'+video])
+            subprocess.call(['ffmpeg', '-i', filepath2+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath3+'/'+video])
 
          
     #################### DeepLabCut ############################
     for dir in datadir3:# Loop through the undistorted folder
         for video in os.listdir(dir):
             #Analyze the videos through deeplabcut
-            deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [filepath2 +'/'+ video],videotype='mp4', destfolder = filepath3, save_as_csv = True)
-            deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[filepath2 +'/'+ video],videotype= 'mp4', destfolder = filepath3)
-          #  deeplabcut.create_labeled_video(DLCconfigPath,[filepath2 +'/'+ video],videotype = 'mp4', destfolder = filepath5)
+            deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [filepath3 +'/'+ video],videotype='mp4', destfolder = filepath4, save_as_csv = True)
+            deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[filepath3 +'/'+ video],videotype= 'mp4', destfolder = filepath4)
+          #  deeplabcut.create_labeled_video(DLCconfigPath,[filepath3 +'/'+ video],videotype = 'mp4', destfolder = filepath6)
 
     
     ###################### OpenPose ######################################
@@ -122,32 +129,32 @@ def runOPandDLC():
     j = 0
     for dir in datadir3:# loop through undistorted folder
         for video in os.listdir(dir):
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath2+'/'+video, '--hand','--face','--write_video', filepath5+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', filepath4+'/'+cam_names[j]])
+            subprocess.call(['bin/OpenPoseDemo.exe', '--video', filepath3+'/'+video, '--hand','--face','--write_video', filepath6+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', filepath5+'/'+cam_names[j]])
             j = j +1
-    
+    '''
     
     ###############If you need To use checkerboard videos##################
     
-    if checkerboardVid:
+    if useCheckerboardVid:
         datadir5 = [checkerVideoFolder]
         
         if not os.path.exists(interfilepath + '/CheckerboardResized'):
             os.mkdir(interfilepath + '/CheckerboardResized')
-        filepath6 = interfilepath + '/CheckerboardResized'
-        datadir6 = [filepath6]
+        filepath7 = interfilepath + '/CheckerboardResized'
+        datadir6 = [filepath7]
 
     #Create a folder for the undistorted videos
         if not os.path.exists(interfilepath + '/CheckerboardUndistorted'):
             os.mkdir(interfilepath + '/CheckerboardUndistorted')
-        filepath7 = interfilepath + '/CheckerboardUndistorted'
+        filepath8 = interfilepath + '/CheckerboardUndistorted'
 
         for dir in datadir5: # for loop parses through the raw video folder
             for video in os.listdir(dir):
-                subprocess.call(['ffmpeg', '-i', checkerVideoFolder+'/'+video, '-vf', 'scale=1280:960', filepath6+'/'+video])
+                subprocess.call(['ffmpeg', '-i', checkerVideoFolder+'/'+video, '-vf', 'scale=1280:960', filepath7+'/'+video])
 
         for dir in datadir6:
             for video in os.listdir(dir):
-                subprocess.call(['ffmpeg', '-i', filepath6+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath7+'/'+video])
+                subprocess.call(['ffmpeg', '-i', filepath7+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath8+'/'+video])
         
         
 

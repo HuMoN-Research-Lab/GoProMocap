@@ -12,38 +12,37 @@ subject = 'CJC'
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '20200318'
+date = '20200319'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0001'
+session_num = '0002'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'D:/Juggling'
 
 #Enter the Camera Names
-cam_names = ['CamA','CamB','CamD']
+cam_names = ['CamA','CamB','CamC','CamD']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
 
-#If the checkerboard is NOT in the full video set this as True
-checkerboardVid = True
+#If you need to use a short clip of checkerboard set as true
+useCheckerboardVid = True
 
 #If the go pro videos get cut into two videos  
-num_of_cameras = 3 #Supports up to 4
+num_of_cameras = 4 #Supports up to 4
 base_Cam_Index = 'A'    #A/B/C
-video_resolution = (1280,960) #specified resized video size # decide from video
 
+#What features from video you are tracking
 include_DLC = True
 include_OpenPoseSkeleton = True
 include_OpenPoseHands = True
-include_OpenPoseFace = True
+include_OpenPoseFace = False
 
-
-
-Len_of_frame = 50 #how many frames you want to reconstruct 3d #whole video option
-start_frame = 300
-
+#What frame of video you want to start reconstruction
+start_frame = 1000
+#How many frames you want to reconstruct, for full video input -1
+Len_of_frame = 10
 
 
 

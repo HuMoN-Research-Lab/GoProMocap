@@ -10,12 +10,12 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from config import video_resolution,num_of_cameras,checkerboardVid, cam_names
+from config import num_of_cameras,useCheckerboardVid, cam_names
 from create_project import baseFilePath, checkerVideoFolder, rawVideoFolder
 
 
 
-if checkerboardVid == True:
+if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
     SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
@@ -128,11 +128,11 @@ def get_RT_mtx(path,cam_name,video_resolution):
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)
             img = cv2.drawChessboardCorners(img, (6,9), corners2,ret)
             cv2.imshow('img',img)
-            cv2.waitKey(500)
+            #cv2.waitKey(500)
     
         count += 1
         print(count)
-
+        
     cv2.destroyAllWindows()
 
     #=================store camera information
@@ -164,6 +164,7 @@ def video_loader(fileName,Cam_Indx):
     DATADIR_1 = SourceVideoFolder
     datadir =[DATADIR_1]
     video_array = []
+    
     for dir in datadir:
         for video in os.listdir(dir):
             if video == fileName:
@@ -177,7 +178,7 @@ def video_loader(fileName,Cam_Indx):
                     success,image = vidcap.read()
                     if success:
                         height , width , layers =  image.shape
-                        resize = cv2.resize(image, video_resolution) 
+                        resize = cv2.resize(image, (1280,960)) 
                         #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                         #single_video.append(image)
                         if count < 20:   
@@ -194,6 +195,7 @@ def video_loader(fileName,Cam_Indx):
                         print(count)
                     else:
                         break
+                 
 
 
 
@@ -303,6 +305,7 @@ class triangulateTest:
                 X[i,k] = P
         
         return X,vis_list
+        
 
 
 
