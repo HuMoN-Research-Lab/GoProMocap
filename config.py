@@ -1,5 +1,9 @@
 import os
 
+
+
+
+
 ####### To reconstruct the videos. Edit and run this script with your specific details, 
 ####### then from the baseProject path you provided go to the Raw folder which will be in 
 ####### the path of BaseProjectPath/subject/sessionID. In the Raw folder place your full videos 
@@ -22,10 +26,10 @@ subject = 'CJC'
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '20200326'
+date = '2020041*'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0004'
+session_num = '0010'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'C:/Users/chris/JugglingProject'

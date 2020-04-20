@@ -14,13 +14,25 @@ def Parse_OpenPose():
 
     
     
-    if not os.path.exists( fileDict+'OpenPoseOutput'):
-        os.mkdir(fileDict+'OpenPoseOutput')
-    outputfileDict = fileDict + 'OpenPoseOutput'
+    
     openPoseOutputFolders = glob.glob(OPfileDict+'/*')
     
-    j = 0
+    
+    empty  = []
     for cam in openPoseOutputFolders:
+        filelist = sorted(os.listdir(cam))
+        inputFile = open(os.path.join(cam,filelist[0])) #open json file
+        data = json.load(inputFile) #load json content
+        inputFile.close()
+        j = 0
+        for f in os.listdir:
+            inputFile = open(os.path.join(cam,f)) #open json file
+            data = json.load(inputFile) #load json content
+            inputFile.close() #close the input file
+            if len(data['people'] == 0):
+                empty.append[j]
+            j = j+1
+
         cam_name = cam_names
 
         ret = []
@@ -29,11 +41,14 @@ def Parse_OpenPose():
         data = json.load(inputFile) #load json content
         inputFile.close() #close the input file
         target_skeleton = np.array(data['people'][0]['pose_keypoints_2d']).reshape((-1,3))
-
+        
         for f in os.listdir(cam):   
+            print(f)
             inputFile = open(os.path.join(cam,f)) #open json file
             data = json.load(inputFile) #load json content
             inputFile.close() #close the input file
+            if j in empty:
+                continue
             if len(data['people'] == 0):
                 c = 10000000000
                 res = 0
@@ -55,14 +70,16 @@ def Parse_OpenPose():
                 ret.append(d)
 
             if len(data['people']) == 0:
-                a = np.empty((points_inFrame,3))
-                a[:] = np.nan
-                ret.append(a)
+                empty.append[j]
+                continue
+    
+            j =j+1
+                
         
         ret = np.array(ret)
-        #should be (1451,46,3)
         print(ret.shape)
         np.save(outputfileDict+'/OP_'+cam_names[j]+'.npy',ret)
         j= j+1
 
+Parse_OpenPose()
 

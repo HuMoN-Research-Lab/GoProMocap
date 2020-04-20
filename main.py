@@ -15,7 +15,7 @@ from Parse_OpenPose import Parse_OpenPose
 import subprocess
 
 #=====================Run OpenPose and DeepLabCut and parse through the output
-#runOPandDLC()
+runOPandDLC()
 #Parse_dlc()
 #Parse_OpenPose()
 
@@ -131,28 +131,28 @@ if num_of_cameras == 4:
     if base_Cam_Index == 'A':
         MA,MB,MC,MD = get_TransMat(H_CamA,H_CamB,H_CamC,H_CamD)
         PA,PB,PC,PD = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC),np.dot(K_CamD,MD)
-        Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC'],pixelCoord['CamD']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam3],pixelCoord[cam4]),axis = 2)
         Proj_Mat = np.stack((PA,PB,PC,PD),axis=0)
 
     elif base_Cam_Index == 'B':
         MB,MA,MC,MD = get_TransMat(H_CamB,H_CamA,H_CamC,H_CamD)
         PB,PA,PC,PD = np.dot(K_CamB,MB),np.dot(K_CamA,MA),np.dot(K_CamC,MC),np.dot(K_CamD,MD)
-        Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA'],pixelCoord['CamC'],pixelCoord['CamD']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam2],pixelCoord[cam1],pixelCoord[cam3],pixelCoord[cam4]),axis = 2)
         Proj_Mat = np.stack((PB,PA,PC,PD),axis=0)
 
     elif base_Cam_Index == 'C':
         MC,MA,MB,MD = get_TransMat(H_CamC,H_CamA,H_CamB,H_CamD)
         PC,PA,PB,PD = np.dot(K_CamC,MC),np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamD,MD)
-        Proj_points = np.stack((pixelCoord['CamC'],pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamD']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam3],pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam4]),axis = 2)
         Proj_Mat = np.stack((PC,PA,PB,PD),axis=0)
 
     elif base_Cam_Index == 'D':
         MD,MA,MB,MC = get_TransMat(H_CamD,H_CamA,H_CamB,H_CamC)
         PD,PA,PB,PC = np.dot(K_CamD,MD),np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC)
-        Proj_points = np.stack((pixelCoord['CamD'],pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam4],pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam3]),axis = 2)
         Proj_Mat = np.stack((PD,PA,PB,PC),axis=0)
     
-    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1],pixelCoord['CamC'][:,:25,:-1],pixelCoord['CamD'][:,:25,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord[cam1][:,:points_inFrame,:-1],pixelCoord[cam2][:,:points_inFrame,:-1],pixelCoord[cam3][:,:points_inFrame,:-1],pixelCoord[cam4][:,:points_inFrame,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel(),Proj_Mat[3].ravel()))
 
 
@@ -161,38 +161,38 @@ elif num_of_cameras == 3:
     if base_Cam_Index == 'A':
         MA,MB,MC = get_TransMat(H_CamA,H_CamB,H_CamC)
         PA,PB,PC = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC)
-        Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam3]),axis = 2)
         Proj_Mat = np.stack((PA,PB,PC),axis=0)
     
     elif base_Cam_Index == 'B':
         MB,MA,MC = get_TransMat(H_CamB,H_CamA,H_CamC)
         PB,PA,PC = np.dot(K_CamB,MB),np.dot(K_CamA,MA),np.dot(K_CamC,MC)
-        Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA'],pixelCoord['CamC']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam2],pixelCoord[cam1],pixelCoord[cam3]),axis = 2)
         Proj_Mat = np.stack((PB,PA,PC),axis=0)
     
     elif base_Cam_Index == 'C':
         MC,MA,MB = get_TransMat(H_CamC,H_CamA,H_CamB)
         PC,PA,PB = np.dot(K_CamC,MC),np.dot(K_CamA,MA),np.dot(K_CamB,MB)
-        Proj_points = np.stack((pixelCoord['CamC'],pixelCoord['CamA'],pixelCoord['CamB']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam3],pixelCoord[cam1],pixelCoord[cam2]),axis = 2)
         Proj_Mat = np.stack((PC,PA,PB),axis=0)
     
-    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1],pixelCoord['CamC'][:,:25,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord[cam1][:,:points_inFrame,:-1],pixelCoord[cam2][:,:points_inFrame,:-1],pixelCoord[cam3][:,:points_inFrame,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel()))
     
 elif num_of_cameras == 2:
     if base_Cam_Index == 'A':
         MA,MB = get_TransMat(H_CamA,H_CamB)
         PA,PB = np.dot(K_CamA,MA),np.dot(K_CamB,MB)
-        Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2]),axis = 2)
         Proj_Mat = np.stack((PA,PB),axis=0)
     
     elif base_Cam_Index == 'B':
         MB,MA = get_TransMat(H_CamB,H_CamA)
         PB,PA = np.dot(K_CamB,MB),np.dot(K_CamA,MA)
-        Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA']),axis = 2)
+        Proj_points = np.stack((pixelCoord[cam2],pixelCoord[cam1]),axis = 2)
         Proj_Mat = np.stack((PB,PA),axis=0)
     
-    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord[cam1][:,:points_inFrame,:-1],pixelCoord[cam2][:,:points_inFrame,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel()))
 
 
@@ -259,7 +259,7 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
                 true_pixel_coord[Len_of_frame+i] = points2d[VIS_cam_List[i]][i]
 
             
-            
+
         reproj_points = np.vstack((reproj1,reproj2))
  
         reproj_points = reproj_points[:,:,:2] / reproj_points[:,:,2,np.newaxis]
