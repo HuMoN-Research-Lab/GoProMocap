@@ -4,36 +4,51 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import cam_names, base_Cam_Index,num_of_cameras,video_resolution,Len_of_frame,start_frame,include_DLC,points_inFrame, baseFilePath,checkerVideoFolder, rawVideoFolder, checkerboardVid
+from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
 from VideoProcess import runOPandDLC
 from Parse_dlc import Parse_dlc
-from Parse_OpenPose import Parse_OpenPose
+from Parse_OpenPose import Parse_OpenPose, points_inFrame
 import subprocess
+from create_project import checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, create_project
+
+
+#=========================Create Folders for project
+create_project()
+print("A project has now been created in the specified base file path.")
+print("Place raw videos in the following file path:")
+print("(base file path)/projectname/raw/RawGoProVideo")
+print("Place checkerboard videos in the following file path:")
+print("(base file path)/projectname/raw/Checkerboard")
+input("Press enter when finished moving videos to correct folder")
+
 
 #=====================Run OpenPose and DeepLabCut and parse through the output
-runOPandDLC()
-#Parse_dlc()
+#runOPandDLC()
 #Parse_OpenPose()
+#Parse_dlc()
 
 #========================Get source video
-if checkerboardVid == True:
-    SourceVideoFolder = checkerVideoFolder
+if useCheckerboardVid == True:
+    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
-    SourceVideoFolder = rawVideoFolder
+    SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
 
+fullVideoFolder = baseFilePath + '/Intermediate/Undistorted' #Always need to use this
 #======================== Set up names for videos
 cam1 = cam_names[0]
 cam2 = cam_names[1]
+
 if num_of_cameras ==2:
     Source_video_List = [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2]]
 if num_of_cameras ==3: 
     cam3 = cam_names[2]
     Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],[cam3+'.MP4',cam3]]
 if num_of_cameras ==4:
+    cam3 = cam_names[2]
     cam4 = cam_names[3]
     Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],[cam3+'.MP4',cam3],[cam4+'.MP4',cam4]]
 
@@ -68,13 +83,24 @@ if num_of_cameras ==4:
                                           [rootOPFolder+'OP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3],
                                           [rootOPFolder+'OP_'+cam4+'.npy',rootDLCFolder+'dlc_'+cam4+'.npy',cam4]]
 
+if Len_of_frame == -1:
+    frameLengthAllCam = [] #create variable to stoe frame length
+    for dir in [fullVideoFolder]:
+        for video in os.listdir(dir):
+            vidcap = cv2.VideoCapture(os.path.join(dir,video))
+            frameLengthOneCam = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+            frameLengthAllCam.append(frameLengthOneCam)
+    
+    minVideo = frameLengthAllCam.index(min(frameLengthAllCam))  
+    shortestVideo = frameLengthAllCam[minVideo]
+    Len_of_frame = shortestVideo
+
+
 
 base_cam = {'A':0,'B':1,'C':2,'D':3}
-
 #==================load image from videos 
 for path in Source_video_List:
     video_loader(path[0],path[1])
-
 
 #==================load pixel data to a dictionary
 pixelCoord = {}
@@ -96,25 +122,23 @@ else:
 
 #================== calibrate the cameras
 
-_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx('Calibration/Cam2_Calibration/*.jpg','B',video_resolution)
+_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],(1280,960))
 tvec_CamB,rvec_CamB = B_tvecs[0],B_rvecs[0]
 RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
 H_CamB = R_t2H(RoMat_B,tvec_CamB)
 
-_,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx('Calibration/Cam1_Calibration/*.jpg','A',video_resolution)
+_,K_CamA,A_dist,A_rvecs,A_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[0]+'_Calibration/*jpg',cam_names[0],(1280,960))
 tvec_CamA,rvec_CamA = A_tvecs[0],A_rvecs[0]
 RoMat_A, _ = cv2.Rodrigues(rvec_CamA)
 H_CamA = R_t2H(RoMat_A,tvec_CamA)
-
-
 if num_of_cameras > 2:
-    _,K_CamC,C_dist,C_rvecs,C_tvecs = get_RT_mtx('Calibration/Cam3_Calibration/*.jpg','C',video_resolution)
+    _,K_CamC,C_dist,C_rvecs,C_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[2]+'_Calibration/*jpg',cam_names[2],(1280,960))
     tvec_CamC,rvec_CamC = C_tvecs[0],C_rvecs[0]
     RoMat_C, _ = cv2.Rodrigues(rvec_CamC)
     H_CamC = R_t2H(RoMat_C,tvec_CamC)
 
 if num_of_cameras > 3:
-    _,K_CamD,D_dist,D_rvecs,D_tvecs = get_RT_mtx('Calibration/Cam4_Calibration/*.jpg','D',video_resolution)
+    _,K_CamD,D_dist,D_rvecs,D_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[3]+'_Calibration/*jpg',cam_names[3],(1280,960))
     tvec_CamD,rvec_CamD = D_tvecs[0],D_rvecs[0]
     RoMat_D, _ = cv2.Rodrigues(rvec_CamD)
     H_CamD = R_t2H(RoMat_D,tvec_CamD)
@@ -182,7 +206,7 @@ elif num_of_cameras == 3:
 elif num_of_cameras == 2:
     if base_Cam_Index == 'A':
         MA,MB = get_TransMat(H_CamA,H_CamB)
-        PA,PB = np.dot(K_CamA,MA),np.dot(K_CamB,MB)
+        PA,PB = np.dot(K_CamA,MA),np.dot(K_CamB,MB) 
         Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2]),axis = 2)
         Proj_Mat = np.stack((PA,PB),axis=0)
     
@@ -362,7 +386,6 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
     return coords,Optimized_Proj_mat
 
 print("optimization started")
-
 C,M = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
 
 if include_DLC:
@@ -405,4 +428,4 @@ if num_of_cameras == 4:
 #============================Blender Animation
 #fileLoc = os.path.dirname(os.path.abspath(__file__))
 #os.chdir(fileLoc)
-subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
+#subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])

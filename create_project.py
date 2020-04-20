@@ -1,21 +1,28 @@
 import os
+from config import session_num, project, date, subject, baseProjectPath
 
-##### Not a necessary step, if videos are already saved in the correct format specified in config, update config and run main #######
 
-#Intials of subject
-subject = 'CJC'
+sessionID =  project+session_num+'_'+date
 
-#Enter date in format YYYYMMDD
-date = '20200407'
+def create_project():
+    #Create Folders for Project
+    if not os.path.exists(baseProjectPath+'/'+subject):
+        os.mkdir(baseProjectPath+'/'+subject)
 
-#Enter session number as four digits. Example: for session 1, 0001
-session_num = '0007'
+    if not os.path.exists(baseProjectPath+'/'+subject+'/'+sessionID):
+        os.mkdir(baseProjectPath+'/'+subject+'/'+sessionID)
+    
+    if not os.path.exists(baseFilePath+'/Raw'):
+        os.mkdir(baseFilePath+'/Raw')
+    
+    if not os.path.exists(rawData+'/RawGoProData'):
+        os.mkdir(rawData+'/RawGoProData')
+    
+    if not os.path.exists(rawData+'/Checkerboard'):
+        os.mkdir(rawData+'/Checkerboard')
 
-#Base folder path where you would like to save the project to
-
-baseProjectPath = 'C:/Users/chris/JugglingProject'
-
-#Create Folder names 
-sessionID = 
-
+baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID
+rawData = baseFilePath+'/Raw'
+checkerVideoFolder = rawData+'/Checkerboard'
+rawVideoFolder = rawData+'/RawGoProData'
 

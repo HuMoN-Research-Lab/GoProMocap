@@ -10,13 +10,15 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from config import video_resolution,num_of_cameras,checkerVideoFolder, rawVideoFolder, checkerboardVid
+from config import num_of_cameras,useCheckerboardVid, cam_names
+from create_project import baseFilePath, checkerVideoFolder, rawVideoFolder
 
-if checkerboardVid == True:
-    SourceVideoFolder = checkerVideoFolder
+
+
+if useCheckerboardVid == True:
+    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
-    SourceVideoFolder = rawVideoFolder
-
+    SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
 
 class Exceptions(Exception):
     pass
@@ -93,7 +95,7 @@ def R_t2H(R,T):
     return ret
 
 
-def get_RT_mtx(path,Cam_indx,video_resolution):
+def get_RT_mtx(path,cam_name,video_resolution):
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -126,21 +128,25 @@ def get_RT_mtx(path,Cam_indx,video_resolution):
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)
             img = cv2.drawChessboardCorners(img, (6,9), corners2,ret)
             cv2.imshow('img',img)
-            cv2.waitKey(500)
+            #cv2.waitKey(500)
     
         count += 1
         print(count)
-
+        
     cv2.destroyAllWindows()
 
     #=================store camera information
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_ret.npy',ret)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_mtx.npy',mtx)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_dist.npy',dist)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_rvec.npy',rvecs)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_tvecs.npy',tvecs)
-
+    
+    if not os.path.exists(baseFilePath + '/Calibration/CameraINFO'):
+        os.mkdir(baseFilePath + '/Calibration/CameraINFO')
+    
+    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_ret.npy',ret)
+    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_mtx.npy',mtx)
+    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_dist.npy',dist)
+    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_rvec.npy',rvecs)
+    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_tvecs.npy',tvecs)
+      
     return ret,mtx,dist,rvecs,tvecs
 
 
@@ -151,10 +157,14 @@ def video_loader(fileName,Cam_Indx):
     Cam_Index: CamA/CamB/CamC, depand on how many cameras are used during recording
     """
 
+    if not os.path.exists(baseFilePath + '/Calibration'):
+        os.mkdir(baseFilePath + '/Calibration')
+    calibratefilepath = baseFilePath + '/Calibration'
 
     DATADIR_1 = SourceVideoFolder
     datadir =[DATADIR_1]
     video_array = []
+    
     for dir in datadir:
         for video in os.listdir(dir):
             if video == fileName:
@@ -168,11 +178,13 @@ def video_loader(fileName,Cam_Indx):
                     success,image = vidcap.read()
                     if success:
                         height , width , layers =  image.shape
-                        resize = cv2.resize(image, video_resolution) 
+                        resize = cv2.resize(image, (1280,960)) 
                         #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                         #single_video.append(image)
-                        if count < 20:
-                            cv2.imwrite("Calibration/"+Cam_Indx+"_Calibration/frame%d.jpg" % count, resize)     # save frame as JPEG file
+                        if count < 20:   
+                            if not os.path.exists(baseFilePath + '/Calibration/'+Cam_Indx+'_Calibration'):
+                                os.mkdir(baseFilePath + '/Calibration/'+Cam_Indx+'_Calibration')                       
+                            cv2.imwrite(baseFilePath+'/Calibration/'+Cam_Indx+'_Calibration/frame%d.jpg' %count , resize)     # save frame as JPEG file
                             print(resize.shape)
                         else:
                             break
@@ -183,6 +195,7 @@ def video_loader(fileName,Cam_Indx):
                         print(count)
                     else:
                         break
+                 
 
 
 
@@ -292,6 +305,7 @@ class triangulateTest:
                 X[i,k] = P
         
         return X,vis_list
+        
 
 
 

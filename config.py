@@ -1,17 +1,3 @@
-import os
-
-
-
-
-
-####### To reconstruct the videos. Edit and run this script with your specific details, 
-####### then from the baseProject path you provided go to the Raw folder which will be in 
-####### the path of BaseProjectPath/subject/sessionID. In the Raw folder place your full videos 
-###### in the RawGoProData folder and the checkerboard only videos in the checkerboard folder.\
-#  
-####### IMPORTANT: name each video CamA, CamB, CamC, CamD. If there is multiple parts name them CamA_part1,
-####### CamA_part2 etc. After the videos are named correctly and placed in the proper folder, run the script
-####### main.py to see your videos reconstructed in 3D!
 
 'some system configuration will be defined as below'
 
@@ -26,13 +12,13 @@ subject = 'CJC'
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '2020041*'
+date = '20200319'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0010'
+session_num = '0002'
 
 #Base folder path where you would like to save the project to
-baseProjectPath = 'C:/Users/chris/JugglingProject'
+baseProjectPath = 'D:/Juggling'
 
 #Enter the Camera Names
 cam_names = ['CamA','CamB','CamC','CamD']
@@ -40,46 +26,25 @@ cam_names = ['CamA','CamB','CamC','CamD']
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
 
-#If the checkerboard is NOT in the full video set this as True
-checkerboardVid = False
+#If you need to use a short clip of checkerboard set as true
+useCheckerboardVid = True
 
 #If the go pro videos get cut into two videos  
-num_of_cameras = 2  #Supports up to 4
+num_of_cameras = 4 #Supports up to 4
 base_Cam_Index = 'A'    #A/B/C
-video_resolution = (1280,960) #specified resized video size # decide from video
-include_DLC = False
-include_OpenPose = True
-points_inFrame = 25
+
+#What features from video you are tracking
+include_DLC = True
+include_OpenPoseSkeleton = True
+include_OpenPoseHands = True
+include_OpenPoseFace = False
+
+#What frame of video you want to start reconstruction
+start_frame = 1000
+#How many frames you want to reconstruct, for full video input -1
+Len_of_frame = 10
 
 
-Len_of_frame = 500 #how many frames you want to reconstruct 3d #whole video option
-start_frame = 20000
 
-
-#END OF USER INPUT
-##########################################################################
-
-# Create folder name
-sessionID =  project+session_num+'_'+date
-
-#Create Folders for Project
-if not os.path.exists(baseProjectPath+'/'+subject):
-    os.mkdir(baseProjectPath+'/'+subject)
-
-if not os.path.exists(baseProjectPath+'/'+subject+'/'+sessionID):
-    os.mkdir(baseProjectPath+'/'+subject+'/'+sessionID)
-baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID
-
-if not os.path.exists(baseFilePath+'/Raw'):
-    os.mkdir(baseFilePath+'/Raw')
-rawData = baseFilePath+'/Raw'
-
-if not os.path.exists(rawData+'/RawGoProData'):
-    os.mkdir(rawData+'/RawGoProData')
-rawVideoFolder = rawData+'/RawGoProData'
-
-if not os.path.exists(rawData+'/Checkerboard'):
-    os.mkdir(rawData+'/Checkerboard')
-checkerVideoFolder = rawData+'/Checkerboard'
 
 
