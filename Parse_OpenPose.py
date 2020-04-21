@@ -60,18 +60,33 @@ def Parse_OpenPose():
             inputFile = open(os.path.join(cam,f)) #open json file
             data = json.load(inputFile) #load json content
             inputFile.close() #close the input file
+            c = 10000000000
+            res = 0
             j = j+1 
             if (len(data['people'] )) == 0: 
                 noPersonInFrame.append(j) 
                 a = np.empty((points_inFrame,3))
-                a[:] = np.nan
+                a[:] = np.zeros
                 ret.append(a)
             else:
                 if include_OpenPoseSkeleton:
-                    skeleton = np.array(data['people'][0]['pose_keypoints_2d']).reshape((-1,3))
-                else: 
-                    skeleton = []
-                if include_OpenPoseHands:       
+                    for people in data['people']:
+                        skeleton = np.array(people['pose_keypoints_2d']).reshape((-1,3))
+                        distance = sum(sum(abs(target_skeleton-skeleton)))
+                        if distance < c:
+                            c = distance
+                            res = skeleton 
+                    target_skeleton = res
+                ret.append(res)
+
+        ret = np.array(ret)
+        print(ret.shape)
+        np.save(outputfileDict+'/OP_'+cam_names[k]+'.npy',ret)
+        k  = k+1
+    return noPersonInFrame
+
+
+if include_OpenPoseHands:       
                     hand_left = np.array(data['people'][0]["hand_left_keypoints_2d"]).reshape((-1,3))
                     hand_right = np.array(data['people'][0]["hand_right_keypoints_2d"]).reshape((-1,3))
                 else:
@@ -82,10 +97,4 @@ def Parse_OpenPose():
                 else:
                     face = []
                 d = np.concatenate((skeleton,hand_left,hand_right),axis = 0)
-                ret.append(d)
-
-        ret = np.array(ret)
-        print(ret.shape)
-        np.save(outputfileDict+'/OP_'+cam_names[k]+'.npy',ret)
-        k  = k+1
-    return noPersonInFrame
+                ret.append(d)'''
