@@ -1,9 +1,14 @@
 import os
+import h5py
 import subprocess
+import json
+import numpy as np
 import deeplabcut
-from config import DLCconfigPath,  cam_names, useCheckerboardVid, num_of_cameras,baseProjectPath
+from config import DLCconfigPath,  cam_names, useCheckerboardVid, num_of_cameras,baseProjectPath, getCamParams
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
+from GetCameraParams import getCamParams
+from UndistortVideo import UndistortVideo
 
 
 def runOPandDLC():
@@ -14,7 +19,7 @@ def runOPandDLC():
         cam3 = cam_names[2]
     if num_of_cameras >3:
         cam4 = cam_names[3]
-
+    
     #Set directory
     os.chdir("/Windows/system32")
     #Sets the file path to the where the videos are stored
@@ -53,14 +58,15 @@ def runOPandDLC():
     DLCDatadir = [DLCfilepath]
 
     #Create a folder for the openpose output
-    if not os.path.exists(interfilepath + '/OpenPose'):
-        os.mkdir(interfilepath + '/OpenPose')
-    openposeFilepath = interfilepath + '/OpenPose'
+    if not os.path.exists(interfilepath + '/OpenPoseRaw'):
+        os.mkdir(interfilepath + '/OpenPoseRaw')
+    openposeRawFilepath = interfilepath + '/OpenPoseRaw'
 
     #Create a folder for videos
     if not os.path.exists(interfilepath+'/VideoOutput'):
         os.mkdir(interfilepath+'/VideoOutput')
     videoOutputFilepath = interfilepath+'/VideoOutput'
+    
     
     ####################### Join video parts together ###################### 
     #create a text file for each camera 
@@ -97,14 +103,20 @@ def runOPandDLC():
 
 
     #################### Undistortion #########################
-    for dir in combinedDatadir:
-        for video in os.listdir(dir):
-            subprocess.call(['ffmpeg', '-i', combinedFilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", undistortedFilepath+'/'+video])
+    #for dir in combinedDatadir:
+    #    for video in os.listdir(dir):
+    #        subprocess.call(['ffmpeg', '-i', combinedFilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", undistortedFilepath+'/'+video])
+    
+    if getCamParams:
+        getCamParams()
+    
+    UndistortVideo()
+
 
     #####################Copy Videos to DLC Folder############
     for dir in undistortDatadir:
         for video in os.listdir(dir):
-            subprocess.call(['ffmpeg', '-i', undistortDatadir+'/'+video,  DLCfilepath+'/'+video])
+            subprocess.call(['ffmpeg', '-i', undistortedFilepath+'/'+video,  DLCfilepath+'/'+video])
 
 
     #################### DeepLabCut ############################
@@ -121,9 +133,9 @@ def runOPandDLC():
     ###################### OpenPose ######################################
     os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
-    for dir in datadir3:# loop through undistorted folder
+    for dir in undistortDatadir:# loop through undistorted folder
         for video in os.listdir(dir):
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', undistortedFilepath+'/'+video, '--hand','--face','--write_video', videoOutputFilepath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', openposeFilepath+'/'+cam_names[j]])
+            subprocess.call(['bin/OpenPoseDemo.exe', '--video', undistortedFilepath+'/'+video, '--hand','--face','--write_video', videoOutputFilepath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', openposeRawFilepath+'/'+cam_names[j]])
             j = j +1
     
     
@@ -140,4 +152,34 @@ def runOPandDLC():
         for dir in checkerDatadir:
             for video in os.listdir(dir):
                 subprocess.call(['ffmpeg', '-i', checkerVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", checkerUndistortFilepath+'/'+video])
+    
+    ########## Put Openpose Data into h5   ######################
+    if not os.path.exists(interfilepath + '/OpenPoseOutput'):
+        os.mkdir(interfilepath + '/OpenPoseOutput')
+    openposeOutputFilepath = interfilepath + '/OpenPoseOutput'
+    
+    j = 0 #Counter variable
+    for cam in [interfilepath + '/OpenPose']:# Loops through each camera    
+        with  h5py.File(openposeOutputFilepath + '/OPh5'+ cam_names[j]+'.hdf5', 'w') as f:
+            k =0
+            cameraGroup = f.create_group(cam_names[j])
+            for f in os.listdir(cam): #loops through each json file   
+                fileGroup = cameraGroup.create_group('Frame'+str(k))
+                inputFile = open(os.path.join(cam,f)) #open json file
+                data = json.load(inputFile) #load json content
+                inputFile.close() #close the input file
+                ii = 0 
+                for people in data['people']:
+                    skeleton = np.array(people['pose_keypoints_2d']).reshape((-1,3))
+                    hand_left = np.array(people['hand_left_keypoints_2d']).reshape((-1,3))
+                    hand_right = np.array(people['hand_right_keypoints_2d']).reshape((-1,3))
+                    face = np.array(people['face_keypoints_2d']).reshape((-1,3))  #Get skeleton points
 
+                    persongroup = fileGroup.create_group('Person'+str(ii))
+                    skeletondata = persongroup.create_dataset('Skeleton', data =skeleton)
+                    rightHanddata = persongroup.create_dataset('RightHand', data =hand_right) 
+                    leftHanddata = persongroup.create_dataset('LeftHand', data =hand_left)
+                    facedata = persongroup.create_dataset('Face', data =face)                                       
+                    ii = ii +1 
+                k= k +1
+        j = j + 1

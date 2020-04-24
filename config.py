@@ -21,17 +21,20 @@ session_num = 'TEST'
 baseProjectPath = 'D:/Juggling'
 
 #Enter the Camera Names
-cam_names = ['CamA','CamB','CamC','CamD']
+cam_names = ['CamBClose','CamBFar']
 
 #off of base project path
-DLCconfigPath = 'DLCNetworks/Juggle-CC-2020-03-24/config.yaml'
+DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
 
 #If you need to use a short clip of checkerboard set as true
 useCheckerboardVid = False
 
+#If you need to get camera parameters set to true( If first time processing set to true)
+getCamParams = True
+
 #If the go pro videos get cut into two videos  
-num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
-base_Cam_Index = 'A'  #Put same name as you did in cam_names
+num_of_cameras = 2 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
+base_Cam_Index = 'CamA'  #Put same name as you did in cam_names
 
 #What features from video you are tracking
 include_DLC = False

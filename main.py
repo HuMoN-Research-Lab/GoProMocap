@@ -9,9 +9,9 @@ from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from VideoProcess import runOPandDLC
+from RunOPandDLC import runOPandDLC
 from Parse_dlc import Parse_dlc
-from Parse_OpenPose import Parse_OpenPose, points_inFrame
+#from Parse_OpenPose import Parse_OpenPose, points_inFrame
 import subprocess
 from create_project import checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, create_project
 

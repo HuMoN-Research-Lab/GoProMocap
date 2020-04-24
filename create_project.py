@@ -4,6 +4,14 @@ from config import session_num, project, date, subject, baseProjectPath
 
 sessionID =  project+session_num+'_'+date
 
+baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID
+rawData = baseFilePath+'/Raw'
+checkerVideoFolder = rawData+'/Checkerboard'
+rawVideoFolder = rawData+'/RawGoProData'
+calibrationFilePath = baseProjectPath +'/'+subject+'/Calibration'
+cameraParamsFilePath = calibrationFilePath +'/CameraParams'
+calibVideoFilepath = calibrationFilePath +'/CalibrationVideos'
+
 def create_project():
     #Create Folders for Project
     if not os.path.exists(baseProjectPath+'/'+subject):
@@ -21,8 +29,13 @@ def create_project():
     if not os.path.exists(rawData+'/Checkerboard'):
         os.mkdir(rawData+'/Checkerboard')
 
-baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID
-rawData = baseFilePath+'/Raw'
-checkerVideoFolder = rawData+'/Checkerboard'
-rawVideoFolder = rawData+'/RawGoProData'
+    if not os.path.exists(calibrationFilePath):
+        os.mkdir(calibrationFilePath)
+    
+    if not os.path.exists(cameraParamsFilePath):
+        os.mkdir(cameraParamsFilePath)
+
+    if not os.path.exists(calibVideoFilepath):
+        os.mkdir(calibVideoFilepath)
+
 
