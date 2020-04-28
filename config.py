@@ -12,13 +12,13 @@ subject = 'CJC'
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '20200319'
+date = '2020421'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0002'
+session_num = 'TEST'
 
 #Base folder path where you would like to save the project to
-baseProjectPath = 'D:/Juggling'
+baseProjectPath = 'C:/Users/chris/JugglingProject'
 
 #Enter the Camera Names
 cam_names = ['CamA','CamB','CamC','CamD']

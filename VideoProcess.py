@@ -1,6 +1,6 @@
 import os
 import subprocess
-import deeplabcut
+#import deeplabcut
 from config import DLCconfigPath,  cam_names, useCheckerboardVid
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 
@@ -66,8 +66,8 @@ def runOPandDLC():
     filepath6 = interfilepath+'/VideoOutput'
 
     
-    
     '''
+    
     ###################### Resize Videos ##################################
     for dir in datadir1: # for loop parses through the raw video folder
         for video in os.listdir(dir):
@@ -114,7 +114,7 @@ def runOPandDLC():
         for video in os.listdir(dir):
             subprocess.call(['ffmpeg', '-i', filepath2+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", filepath3+'/'+video])
 
-         
+        
     #################### DeepLabCut ############################
     for dir in datadir3:# Loop through the undistorted folder
         for video in os.listdir(dir):

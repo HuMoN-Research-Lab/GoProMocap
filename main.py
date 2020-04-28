@@ -101,7 +101,7 @@ base_cam = {'A':0,'B':1,'C':2,'D':3}
 #==================load image from videos 
 for path in Source_video_List:
     video_loader(path[0],path[1])
-
+'''
 #==================load pixel data to a dictionary
 pixelCoord = {}
 if include_DLC:
@@ -118,7 +118,7 @@ else:
     for path in Pixel_coord_FIlE_List:
         pixelCoord[path[1]] = np.load(path[0],allow_pickle = True)
         pixelCoord[path[1]] = pixelCoord[path[1]][start_frame:start_frame+Len_of_frame,:,:]
-
+'''
 
 #================== calibrate the cameras
 
