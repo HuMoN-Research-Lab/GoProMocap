@@ -11,7 +11,7 @@ import time
 from scipy.sparse import lil_matrix
 from RunOPandDLC import runOPandDLC
 from Parse_dlc import Parse_dlc
-#from Parse_OpenPose import Parse_OpenPose, points_inFrame
+from Parse_OpenPose import Parse_OpenPose, points_inFrame
 import subprocess
 from create_project import checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, create_project
 
@@ -95,9 +95,12 @@ if Len_of_frame == -1:
     shortestVideo = frameLengthAllCam[minVideo]
     Len_of_frame = shortestVideo
 
-
-
-base_cam = {cam_names[0]:0,cam_names[1]:1,cam_names[2]:2,cam_names[3]:3}
+if num_of_cameras == 2:
+    base_cam = {cam_names[0]:0,cam_names[1]:1}
+if num_of_cameras == 3:
+    base_cam = {cam_names[0]:0,cam_names[1]:1, cam_names[2]:2}
+if num_of_cameras == 4:
+    base_cam = {cam_names[0]:0,cam_names[1]:1,cam_names[2]:2,cam_names[3]:3}
 #==================load image from videos 
 for path in Source_video_List:
     video_resolution = video_loader(path[0],path[1])

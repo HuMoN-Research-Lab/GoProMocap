@@ -4,13 +4,14 @@ import glob
 import os 
 from config import cam_names
 from create_project import calibrationFilePath, rawVideoFolder, checkerVideoFolder, cameraParamsFilePath, baseFilePath
-
+import subprocess
 
 def UndistortVideo():
     rawDatadir = [rawVideoFolder]
 
     for dir in rawDatadir:
         k = 0 
+        
         for video in os.listdir(dir):
             mtx = np.load(cameraParamsFilePath+'/'+cam_names[k]+'/Calibration_mtx.npy')
             dist = np.load(cameraParamsFilePath+'/'+cam_names[k]+'/Calibration_dist.npy')
@@ -25,10 +26,11 @@ def UndistortVideo():
 
                     # undistort
                     dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
-
                     # crop the image
                     x,y,w,h = roi
                     dst = dst[y:y+h, x:x+w]
+                    #dst = cv2.resize(dst, (1280,960))
+                    
                     height, width, layers = dst.shape
                     break
 
@@ -46,11 +48,12 @@ def UndistortVideo():
                 if ret:
                     h,  w = frame.shape[:2]
                     newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
-
-                # undistort
+  
+                     # undistort
                     dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
                     x,y,w,h = roi
                     dst = dst[y:y+h, x:x+w]
+                    #dst = cv2.resize(dst, (1280,960))
                     #cv2.imshow('frame',dst)
                     #cv2.waitKey(5000)
                     writer.write(dst)
@@ -58,7 +61,15 @@ def UndistortVideo():
             writer.release()
             print(dst.shape)
             k +=1
-            
+    
+    '''
+    for dir in rawDatadir:
+        for video in os.listdir(dir):
+            subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.1432:k2=-0.049", baseFilePath+'/Intermediate/Undistorted/'+video])
+    
+    for dir in rawDatadir:
+        for video in os.listdir(dir):
+            subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', 'lensfun=make=Canon:model=' ,'Canon EOS 100D',':lens_model=','Canon EF-S 18-55mm f/3.5-5.6 IS STM', baseFilePath+'/Intermediate/Undistorted/'+video])
+    '''
 UndistortVideo()
-
 

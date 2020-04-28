@@ -45,7 +45,7 @@ def Parse_OpenPose():
 
     k = 0#Initialize counter
     
-    with h5py.File(outputfileDict + '/OpenPoseOutput.hdf5', 'r') as f:
+    with h5py.File(outputfileDict + '/OpenPoseh5Output.hdf5', 'r') as f:
         allCameras = f.get('Cameras')
         for camera in range(len(allCameras)):
             ret = []#intialize an array to store each json file
@@ -105,11 +105,11 @@ def Parse_OpenPose():
                             target_skeleton = res        
                     ret.append(fullPoints)
 
-                ret = np.array(ret)
-                print(ret.shape)
-                np.save(outputfileDict+'/OP_'+cam_names[k]+'.npy',ret)
-                np.savetxt(outputfileDict+'/OP_'+cam_names[k]+'.txt',ret[:,8,:])
-                k  = k+1
+            ret = np.array(ret)
+            print(ret.shape)
+            np.save(outputfileDict+'/OP_'+cam_names[k]+'.npy',ret)
+            np.savetxt(outputfileDict+'/OP_'+cam_names[k]+'.txt',ret[:,8,:])
+            k  = k+1
     return noPersonInFrame
 
 

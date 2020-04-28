@@ -134,7 +134,7 @@ def get_RT_mtx(path,cam_name,video_resolution):
     
         count += 1
         print(count)
-        
+    print(cam_name)    
     cv2.destroyAllWindows()
 
     #=================store camera information
@@ -176,7 +176,6 @@ def video_loader(fileName,Cam_Indx):
                 vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH)  
                 vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) 
                 video_resolution = (int(vidWidth),int(vidHeight))
-                video_resolution = (1920,1280)
                 success,image = vidcap.read()
                 count = 0
                 #success = True

@@ -7,15 +7,19 @@ from create_project import calibrationFilePath, rawVideoFolder, checkerVideoFold
 
 
 def getCameraParams():
+    amountOfCalImages = 7
     calibDatadir  = [calibVideoFilepath]
     for dir in calibDatadir:
         k = 0 
         for video in os.listdir(dir):
-            '''
+            
             vidcap = cv2.VideoCapture(calibVideoFilepath+'/'+video)
             frame_count = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+            calImagesinVideo = frame_count/amountOfCalImages
             vidlength = range(int(frame_count)) 
+            
             for ii in vidlength:
+
                 success,image = vidcap.read()
                 if success:
                     height , width , layers =  image.shape 
@@ -23,13 +27,13 @@ def getCameraParams():
                     #single_video.append(image)   
                     if not os.path.exists(calibrationFilePath + '/'+cam_names[k]+'_CalibrationImages'):
                         os.mkdir(calibrationFilePath + '/'+cam_names[k]+'_CalibrationImages')                       
-                    cv2.imwrite(calibrationFilePath+'/'+cam_names[k]+'_CalibrationImages/frame%d.jpg' %ii , image)     # save frame as JPEG file
-                    
-                    
+                    cv2.imwrite(calibrationFilePath+'/'+cam_names[k]+'_CalibrationImages/frame%d.jpg' %ii , image)     # save frame as JPEG file    
                 else:
                     continue
-            '''
-
+            
+            
+            
+            
             # termination criteria
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -42,8 +46,8 @@ def getCameraParams():
             imgpoints = [] # 2d points in image plane.
 
             images = glob.glob(calibrationFilePath+'/'+cam_names[k]+'_CalibrationImages/*.jpg')
-
-            for fname in images[::500]:
+            p = 0
+            for fname in images[::int(calImagesinVideo-1)]:
                 img = cv2.imread(fname)
                 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -58,9 +62,11 @@ def getCameraParams():
                 
                     # Draw and display the corners
                     img = cv2.drawChessboardCorners(img, (6,9), corners2,ret)
-                    #cv2.imshow('img',img)
-                    #cv2.waitKey(500)
+                    cv2.imshow('img',img)
+                    cv2.waitKey(500)
+                p+=1
 
+            print(p)
             cv2.destroyAllWindows()
 
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)

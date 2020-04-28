@@ -7,8 +7,8 @@ import deeplabcut
 from config import DLCconfigPath,  cam_names, useCheckerboardVid, num_of_cameras,baseProjectPath, getCamParams
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
-from GetCameraParams import getCamParams
-from UndistortVideo import UndistortVideo
+#from GetCameraParams import getCamParams
+#from UndistortVideo import UndistortVideo
 
 
 def runOPandDLC():
@@ -70,10 +70,10 @@ def runOPandDLC():
     
     ####################### Join video parts together ###################### 
     #create a text file for each camera 
-    cam1vids = open(rawfilepath+'/cam1vids.txt','a')
-    cam2vids = open(rawfilepath+'/cam2vids.txt','a')
-    cam3vids = open(rawfilepath+'/cam3vids.txt','a')
-    cam4vids = open(rawfilepath+'/cam4vids.txt','a')
+    cam1vids = open(combinedFilepath+'/cam1vids.txt','a')
+    cam2vids = open(combinedFilepath+'/cam2vids.txt','a')
+    cam3vids = open(combinedFilepath+'/cam3vids.txt','a')
+    cam4vids = open(combinedFilepath+'/cam4vids.txt','a')
     for dir in rawDatadir: #for loop parses through the resized video folder 
         for video in os.listdir(dir): 
             #Get length of the name of cameras
@@ -96,10 +96,10 @@ def runOPandDLC():
     cam3vids.close()
     cam4vids.close()
     #Use ffmpeg to join all parts of the video together
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', rawfilepath+'/cam1vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam1+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', rawfilepath+'/cam2vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam2+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', rawfilepath+'/cam3vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam3+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', rawfilepath+'/cam4vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam4+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam1vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam1+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam2vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam2+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam3vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam3+'.mp4'])
+    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam4vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam4+'.mp4'])
 
 
     #################### Undistortion #########################
@@ -107,12 +107,12 @@ def runOPandDLC():
     #    for video in os.listdir(dir):
     #        subprocess.call(['ffmpeg', '-i', combinedFilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", undistortedFilepath+'/'+video])
     
-    if getCamParams:
-        getCamParams()
+    #if getCamParams:
+        #getCamParams()
     
-    UndistortVideo()
+    #UndistortVideo()
 
-
+    
     #####################Copy Videos to DLC Folder############
     for dir in undistortDatadir:
         for video in os.listdir(dir):
@@ -159,13 +159,14 @@ def runOPandDLC():
     openposeOutputFilepath = interfilepath + '/OpenPoseOutput'
     
     j = 0 #Counter variable
-    for cam in [interfilepath + '/OpenPose']:# Loops through each camera    
-        with  h5py.File(openposeOutputFilepath + '/OPh5'+ cam_names[j]+'.hdf5', 'w') as f:
+    with  h5py.File(openposeOutputFilepath + '/OpenPoseh5Output.hdf5', 'w') as f:
+        cams = f.create_group('Cameras')
+        for cam in os.listdir(openposeRawFilepath):# Loops through each camera
             k =0
-            cameraGroup = f.create_group(cam_names[j])
-            for f in os.listdir(cam): #loops through each json file   
+            cameraGroup = cams.create_group(cam_names[j])
+            for files in os.listdir(openposeRawFilepath+'/'+cam): #loops through each json file   
                 fileGroup = cameraGroup.create_group('Frame'+str(k))
-                inputFile = open(os.path.join(cam,f)) #open json file
+                inputFile = open(openposeRawFilepath+'/'+cam+'/'+files) #open json file
                 data = json.load(inputFile) #load json content
                 inputFile.close() #close the input file
                 ii = 0 
@@ -182,4 +183,4 @@ def runOPandDLC():
                     facedata = persongroup.create_dataset('Face', data =face)                                       
                     ii = ii +1 
                 k= k +1
-        j = j + 1
+            j = j + 1
