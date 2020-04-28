@@ -3,7 +3,7 @@ import h5py
 import subprocess
 import json
 import numpy as np
-import deeplabcut
+#import deeplabcut
 from config import DLCconfigPath,  cam_names, useCheckerboardVid, num_of_cameras,baseProjectPath, getCamParams
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
@@ -107,10 +107,10 @@ def runOPandDLC():
     #    for video in os.listdir(dir):
     #        subprocess.call(['ffmpeg', '-i', combinedFilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", undistortedFilepath+'/'+video])
     
-    #if getCamParams:
-        #getCamParams()
+    if getCamParams:
+        getCamParams()
     
-    #UndistortVideo()
+    UndistortVideo()
 
     
     #####################Copy Videos to DLC Folder############

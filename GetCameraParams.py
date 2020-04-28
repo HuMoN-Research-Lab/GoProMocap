@@ -90,4 +90,4 @@ def getCameraParams():
             print ("mean error: ", meanError)
             print(tot_error)
             k +=1
-getCameraParams()
+#getCameraParams()

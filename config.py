@@ -21,7 +21,7 @@ session_num = 'TEST'
 baseProjectPath = 'C:/Users/chris/JugglingProject'
 
 #Enter the Camera Names
-cam_names = ['CamA','CamB','CamC']
+cam_names = ['CamA','CamC','CamD']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'

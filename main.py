@@ -104,7 +104,7 @@ if num_of_cameras == 4:
 #==================load image from videos 
 for path in Source_video_List:
     video_resolution = video_loader(path[0],path[1])
-
+'''
 #==================load pixel data to a dictionary
 pixelCoord = {}
 if include_DLC:
@@ -122,7 +122,7 @@ else:
         pixelCoord[path[1]] = np.load(path[0],allow_pickle = True)
         pixelCoord[path[1]] = pixelCoord[path[1]][start_frame:start_frame+Len_of_frame,:,:]
 
-
+'''
 #================== calibrate the cameras
 
 _,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],video_resolution)
