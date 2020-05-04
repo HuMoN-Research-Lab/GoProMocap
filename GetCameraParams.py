@@ -79,7 +79,7 @@ def getCameraParams():
             np.save(cameraParamsFilePath + '/'+cam_names[k]+'/Calibration_rvec.npy',rvecs)
             np.save(cameraParamsFilePath + '/'+cam_names[k]+'/Calibration_tvecs.npy',tvecs)
             
-
+            print(dist)
             tot_error = 0
             for i in range(len(objpoints)):
                 imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
@@ -90,4 +90,5 @@ def getCameraParams():
             print ("mean error: ", meanError)
             print(tot_error)
             k +=1
+
 getCameraParams()

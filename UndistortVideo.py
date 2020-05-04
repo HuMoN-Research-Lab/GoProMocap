@@ -8,7 +8,7 @@ import subprocess
 
 def UndistortVideo():
     rawDatadir = [rawVideoFolder]
-
+    '''
     for dir in rawDatadir:
         k = 0 
         
@@ -61,15 +61,15 @@ def UndistortVideo():
             writer.release()
             print(dst.shape)
             k +=1
-    
     '''
+    
     for dir in rawDatadir:
         for video in os.listdir(dir):
-            subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.1432:k2=-0.049", baseFilePath+'/Intermediate/Undistorted/'+video])
-    
+            subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.1432:k2=-0.042", baseFilePath+'/Intermediate/Undistorted/'+video])
+    '''
     for dir in rawDatadir:
         for video in os.listdir(dir):
             subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', 'lensfun=make=Canon:model=' ,'Canon EOS 100D',':lens_model=','Canon EF-S 18-55mm f/3.5-5.6 IS STM', baseFilePath+'/Intermediate/Undistorted/'+video])
     '''
-UndistortVideo()
+#UndistortVideo()
 

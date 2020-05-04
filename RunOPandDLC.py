@@ -4,22 +4,26 @@ import subprocess
 import json
 import numpy as np
 import deeplabcut
-from config import DLCconfigPath,  cam_names, useCheckerboardVid, num_of_cameras,baseProjectPath, getCamParams
+from config import DLCconfigPath,  cam_names, useCheckerboardVid, num_of_cameras,baseProjectPath, getCamParams, include_DLC
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
 #from GetCameraParams import getCamParams
-#from UndistortVideo import UndistortVideo
+from UndistortVideo import UndistortVideo
 
 
 def runOPandDLC():
     #Set up camera names 
     cam1 = cam_names[0]
-    cam2 = cam_names[1]
+    cam1length = len(cam1)
+    if num_of_cameras>1:
+        cam2 = cam_names[1]
+        cam2length = len(cam2)
     if num_of_cameras >2:
         cam3 = cam_names[2]
+        cam3length = len(cam3)
     if num_of_cameras >3:
         cam4 = cam_names[3]
-    
+        cam4length = len(cam4)
     #Set directory
     os.chdir("/Windows/system32")
     #Sets the file path to the where the videos are stored
@@ -67,7 +71,7 @@ def runOPandDLC():
         os.mkdir(interfilepath+'/VideoOutput')
     videoOutputFilepath = interfilepath+'/VideoOutput'
     
-    
+    '''
     ####################### Join video parts together ###################### 
     #create a text file for each camera 
     cam1vids = open(combinedFilepath+'/cam1vids.txt','a')
@@ -77,19 +81,22 @@ def runOPandDLC():
     for dir in rawDatadir: #for loop parses through the resized video folder 
         for video in os.listdir(dir): 
             #Get length of the name of cameras
-            cam1length = len(cam1); cam2length = len(cam2); cam3length = len(cam3); cam4length = len(cam4); 
+             
             if video[:cam1length] == cam1: # if the video is from Cam1
-                cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                cam1vids.write('file'+" '" +'/'+video+"'") #write the file name of the video to the text file
                 cam1vids.write('\n')                     
-            if video[:cam2length] == cam2: # if the video is from Cam2
-                cam2vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam2vids.write('\n')                   
-            if video[:cam3length] == cam3: # if the video is from Cam3
-                cam3vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam3vids.write('\n') 
-            if video[:cam4length] == cam4: # if the video is from Cam4
-                cam4vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam4vids.write('\n')                     
+            if num_of_cameras >1:
+                if video[:cam2length] == cam2: # if the video is from Cam2
+                    cam2vids.write('file'+" '" +'/'+video+"'") #write the file name of the video to the text file
+                    cam2vids.write('\n')                   
+            if num_of_cameras >2:
+                if video[:cam3length] == cam3: # if the video is from Cam3
+                    cam3vids.write('file'+" '" +'/'+video+"'") #write the file name of the video to the text file
+                    cam3vids.write('\n') 
+            if num_of_cameras >3:
+                if video[:cam4length] == cam4: # if the video is from Cam4
+                    cam4vids.write('file'+" '" +'/'+video+"'") #write the file name of the video to the text file
+                    cam4vids.write('\n')                     
     #Close the text files
     cam1vids.close()
     cam2vids.close()
@@ -97,10 +104,13 @@ def runOPandDLC():
     cam4vids.close()
     #Use ffmpeg to join all parts of the video together
     subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam1vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam1+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam2vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam2+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam3vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam3+'.mp4'])
-    subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam4vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam4+'.mp4'])
-
+    if num_of_cameras >1:    
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam2vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam2+'.mp4'])
+    if num_of_cameras >2:
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam3vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam3+'.mp4'])
+    if num_of_cameras >3:
+        subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', combinedFilepath+'/cam4vids.txt', '-c' ,'copy' ,combinedFilepath+'/'+ cam4+'.mp4'])
+    '''
 
     #################### Undistortion #########################
     #for dir in combinedDatadir:
@@ -112,23 +122,24 @@ def runOPandDLC():
     
     #UndistortVideo()
 
-    
-    #####################Copy Videos to DLC Folder############
-    for dir in undistortDatadir:
-        for video in os.listdir(dir):
-            subprocess.call(['ffmpeg', '-i', undistortedFilepath+'/'+video,  DLCfilepath+'/'+video])
+    if include_DLC:
+        #####################Copy Videos to DLC Folder############
+        for dir in undistortDatadir:
+            for video in os.listdir(dir):
+                subprocess.call(['ffmpeg', '-i', undistortedFilepath+'/'+video,  DLCfilepath+'/'+video])
 
 
     #################### DeepLabCut ############################
-    for dir in DLCDatadir:# Loop through the undistorted folder
-        for video in os.listdir(dir):
-            #Analyze the videos through deeplabcut
-            deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [DLCfilepath +'/'+ video], save_as_csv=True)
-            deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[DLCfilepath +'/'+ video])
     
-    for dir in DLCDatadir:
-        for video in dir:   
-            deeplabcut.create_labeled_video(baseProjectPath+'/'+DLCconfigPath, glob.glob(os.path.join(DLCfilepath ,'*mp4')))
+        for dir in DLCDatadir:# Loop through the undistorted folder
+            for video in os.listdir(dir):
+                #Analyze the videos through deeplabcut
+                deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [DLCfilepath +'/'+ video], save_as_csv=True)
+                deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[DLCfilepath +'/'+ video])
+        
+        for dir in DLCDatadir:
+            for video in dir:   
+                deeplabcut.create_labeled_video(baseProjectPath+'/'+DLCconfigPath, glob.glob(os.path.join(DLCfilepath ,'*mp4')))
     
     ###################### OpenPose ######################################
     os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
@@ -137,6 +148,7 @@ def runOPandDLC():
         for video in os.listdir(dir):
             subprocess.call(['bin/OpenPoseDemo.exe', '--video', undistortedFilepath+'/'+video, '--hand','--face','--write_video', videoOutputFilepath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', openposeRawFilepath+'/'+cam_names[j]])
             j = j +1
+    
     
     
     ###############If you need To use checkerboard videos##################
@@ -184,3 +196,4 @@ def runOPandDLC():
                     ii = ii +1 
                 k= k +1
             j = j + 1
+#runOPandDLC()

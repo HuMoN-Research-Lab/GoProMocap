@@ -44,7 +44,7 @@ def Parse_OpenPose():
     noPersonInFrame =[]
 
     k = 0#Initialize counter
-    
+    j =0
     with h5py.File(outputfileDict + '/OpenPoseh5Output.hdf5', 'r') as f:
         allCameras = f.get('Cameras')
         for camera in range(len(allCameras)):
@@ -58,8 +58,9 @@ def Parse_OpenPose():
                 if len(allPeople) == 0:
                     noPersonInFrame.append(j) 
                     a = np.empty((points_inFrame,3))
-                    a[:] = np.zeros
+                    a[:] = np.nan
                     ret.append(a)
+                    j+=1
                 else:
                     c = 10000000
                     res = 0
@@ -108,8 +109,8 @@ def Parse_OpenPose():
             ret = np.array(ret)
             print(ret.shape)
             np.save(outputfileDict+'/OP_'+cam_names[k]+'.npy',ret)
-            np.savetxt(outputfileDict+'/OP_'+cam_names[k]+'.txt',ret[:,8,:])
+            np.savetxt(outputfileDict+'/OP_'+cam_names[k]+'.txt',ret[:,0,:])
             k  = k+1
     return noPersonInFrame
-
+#Parse_OpenPose()
 
