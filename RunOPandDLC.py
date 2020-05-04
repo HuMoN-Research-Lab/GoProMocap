@@ -117,10 +117,10 @@ def runOPandDLC():
     #    for video in os.listdir(dir):
     #        subprocess.call(['ffmpeg', '-i', combinedFilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", undistortedFilepath+'/'+video])
     
-    #if getCamParams:
-        #getCamParams()
+    if getCamParams:
+        getCamParams()
     
-    #UndistortVideo()
+    UndistortVideo()
 
     if include_DLC:
         #####################Copy Videos to DLC Folder############
