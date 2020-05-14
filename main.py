@@ -4,40 +4,38 @@ import os
 import cv2
 import pickle
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
-from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton
+from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton, calibrateCameras
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from RunOPandDLC import runOPandDLC
-from Parse_dlc import Parse_dlc
-from Parse_OpenPose import Parse_OpenPose, points_inFrame
+from EditVideoRunOpandDLC import getCamParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose
 import subprocess
-from create_project import checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, create_project
+from create_project import openposeOutputFilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
 
 
 #=========================Create Folders for project
 create_project()
-print("A project has now been created in the specified base file path.")
-print("Place raw videos in the following file path:")
-print("(base file path)/projectname/raw/RawGoProVideo")
-print("Place checkerboard videos in the following file path:")
-print("(base file path)/projectname/raw/Checkerboard")
-input("Press enter when finished moving videos to correct folder")
 
+if calibrateCameras:
+    getCamParams(calibrationFilePath)
+#===========================Concat,Undistort and Trim Videos 
+concatVideos(combinedFilepath)
+undistortVideos(combinedFilepath,undistortedFilepath)
+trimVideos(undistortedFilepath,trimFilepath)
 
-#=====================Run OpenPose and DeepLabCut and parse through the output
-#runOPandDLC()
-#Parse_OpenPose()
-#Parse_dlc()
-
+#==========================Run deeplabcut and parse through output
+runDeepLabCut(trimFilepath,DLCfilepath)
+#==========================Run OpenPose and parse through output
+runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
+Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
 else: 
-    SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
+    SourceVideoFolder = undistortedFilepath
 
-fullVideoFolder = baseFilePath + '/Intermediate/Undistorted' #Always need to use this
+fullVideoFolder = undistortedFilepath #Always need to use this
 #======================== Set up names for videos
 cam1 = cam_names[0]
 cam2 = cam_names[1]
@@ -53,8 +51,8 @@ if num_of_cameras ==4:
     Source_video_List= [[cam1+'.MP4',cam1],[cam2+'.MP4',cam2],[cam3+'.MP4',cam3],[cam4+'.MP4',cam4]]
 
 #=====================Get files for dlc and openpose data 
-rootOPFolder = baseFilePath+'/Intermediate/OpenPoseOutPut/'
-rootDLCFolder = baseFilePath+'/Intermediate/DeepLabCut/DLCnpy/'
+rootOPFolder = openposeOutputFilepath
+rootDLCFolder = DLCfilepath +'/DLCnpy'
 
 if num_of_cameras ==2:
     Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],

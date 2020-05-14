@@ -15,13 +15,13 @@ project = 'JugglingPractice'
 date = '2020421'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = 'TEST'
+session_num = '0005'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'C:/Users/chris/JugglingProject'
 
 #Enter the Camera Names
-cam_names = ['CamA','CamC','CamD']
+cam_names = ['CamA','CamB','CamC','CamD']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
@@ -30,17 +30,17 @@ DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
 useCheckerboardVid = False
 
 #If you need to get camera parameters set to true( If first time processing set to true)
-getCamParams = True
+calibrateCameras = True
 
-#If the go pro videos get cut into two videos  
-num_of_cameras = 3 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
+#Enter amount of camera that was recorded with  
+num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
 base_Cam_Index = 'CamA'  #Put same name as you did in cam_names
 
 #What features from video you are tracking
 include_DLC = False
 include_OpenPoseSkeleton = True
-include_OpenPoseHands = False
-include_OpenPoseFace = False
+include_OpenPoseHands = True
+include_OpenPoseFace = True
 
 #What frame of video you want to start reconstruction
 start_frame = 0
