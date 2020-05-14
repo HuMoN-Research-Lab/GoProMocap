@@ -9,16 +9,16 @@ __author__ = 'Yifan'
 subject = 'CJC'
 
 # Project Name
-project = 'JugglingPractice'
+project = 'Juggling'
 
 #Enter date in format YYYYMMDD
-date = '2020421'
+date = '20200504'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0005'
+session_num = 'TEST3'
 
 #Base folder path where you would like to save the project to
-baseProjectPath = 'C:/Users/chris/JugglingProject'
+baseProjectPath = 'D:/Juggling'
 
 #Enter the Camera Names
 cam_names = ['CamA','CamB','CamC','CamD']
@@ -30,9 +30,9 @@ DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
 useCheckerboardVid = False
 
 #If you need to get camera parameters set to true( If first time processing set to true)
-calibrateCameras = True
+getCamParameters = True
 
-#Enter amount of camera that was recorded with  
+#If the go pro videos get cut into two videos  
 num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
 base_Cam_Index = 'CamA'  #Put same name as you did in cam_names
 
