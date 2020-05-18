@@ -12,28 +12,29 @@ from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFo
 import glob
 
 def getCameraParams(filepath):
-    amountOfCalImages = 7
-    calibDatadir  = [filepath+'/CalibrationVideos']
-    for dir in calibDatadir:
-        k = 0 
-        for video in os.listdir(dir):
-            
-            vidcap = cv2.VideoCapture(filepath+'/CalibrationVideos/'+video)
-            frame_count = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-            calImagesinVideo = frame_count/amountOfCalImages
-            vidlength = range(int(frame_count)) 
-            for ii in vidlength:
+    '''Functions input is the filepath to the calibration folder. 
+    The function utilizes opencv functions to find camera parameters based on calibration videos
+    Saves the camera parameters to an output folder with a different npy file for each parameter
+    '''
+    amountOfCalImages = 7 #How many images to take from the videos, only really works between 5 and 10 
+    calibDatadir  = [filepath+'/CalibrationVideos'] #Directory of calibration videos
+    for dir in calibDatadir:#Iterates through the calibration folder
+        k = 0 #Counter variable
+        for video in os.listdir(dir):#Iterates through each video in folder 
+            vidcap = cv2.VideoCapture(filepath+'/CalibrationVideos/'+video) #Read in video
+            frame_count = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)) #find frame count of video 
+            calImagesinVideo = frame_count/amountOfCalImages #The number to iterate through the images in video
+            vidlength = range(int(frame_count)) #Create list for loop
+            for ii in vidlength:#Iterates through each frame of video
 
-                success,image = vidcap.read()
-                if success:
-                    height , width , layers =  image.shape 
-                    #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                    #single_video.append(image)   
-                    if not os.path.exists(filepath + '/'+cam_names[k]+'_CalibrationImages'):
+                success,image = vidcap.read()#reads in frame 
+                if success:# If it successfully reads in a frame
+                    height , width , layers =  image.shape # Get Shape of image 
+                    if not os.path.exists(filepath + '/'+cam_names[k]+'_CalibrationImages'):# create a folder for calibration frames if there isnt one yet 
                         os.mkdir(filepath + '/'+cam_names[k]+'_CalibrationImages')                       
                     cv2.imwrite(filepath+'/'+cam_names[k]+'_CalibrationImages/frame%d.jpg' %ii , image)     # save frame as JPEG file    
-                else:
-                    continue
+                else: # If the frame is not successfully read
+                    continue # Continue
             # termination criteria
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -44,17 +45,17 @@ def getCameraParams(filepath):
             # Arrays to store object points and image points from all the images.
             objpoints = [] # 3d point in real world space
             imgpoints = [] # 2d points in image plane.
-
-            images = glob.glob(filepath+'/'+cam_names[k]+'_CalibrationImages/*.jpg')
-            p = 0
-            for fname in images[::int(calImagesinVideo-1)]:
-                img = cv2.imread(fname)
-                gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        
+            images = glob.glob(filepath+'/'+cam_names[k]+'_CalibrationImages/*.jpg')#Load in all images
+            p = 0#Counter variables
+            for fname in images[::int(calImagesinVideo-1)]:# Iterate through the amount of calibration images
+                img = cv2.imread(fname)#Load image
+                gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)#Convert to grayscale
 
                 # Find the chess board corners
-                ret, corners = cv2.findChessboardCorners(img, (6,9),None)
+                ret, corners = cv2.findChessboardCorners(img, (6,9),None) 
                 # If found, add object points, image points (after refining them)
-                if ret == True:
+                if ret == True: 
                     objpoints.append(objp)
 
                     corners2 = cv2.cornerSubPix(gray,corners,(5,5),(-1,-1),criteria)
@@ -63,23 +64,23 @@ def getCameraParams(filepath):
                     # Draw and display the corners
                     img = cv2.drawChessboardCorners(img, (6,9), corners2,ret)
                     cv2.imshow('img',img)
-                    cv2.waitKey(50000)
+                    cv2.waitKey(1000)
                 p+=1
 
-            print(p)
-            cv2.destroyAllWindows()
+            cv2.destroyAllWindows()#Close windows
 
-            ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-            if not os.path.exists(filepath+'/CameraParams' + '/'+cam_names[k]):
-                os.mkdir(filepath+'/CameraParams' + '/'+cam_names[k])   
+            ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)#Get intrinsics based on chessboard
+            if not os.path.exists(filepath+'/CameraParams/'+cam_names[k]):#Create Camera parameter folder for each camera
+                os.mkdir(filepath+'/CameraParams/' +cam_names[k])   
 
+            #Save out the Parameters 
             np.save(filepath+'/CameraParams' + '/'+cam_names[k]+'/Calibration_ret.npy',ret)
             np.save(filepath+'/CameraParams' + '/'+cam_names[k]+'/Calibration_mtx.npy',mtx)
             np.save(filepath+'/CameraParams' + '/'+cam_names[k]+'/Calibration_dist.npy',dist)
             np.save(filepath+'/CameraParams' + '/'+cam_names[k]+'/Calibration_rvec.npy',rvecs)
             np.save(filepath+'/CameraParams' + '/'+cam_names[k]+'/Calibration_tvecs.npy',tvecs)
             
-
+            #Find reprojection Error and Print to check if the calibration is decent 
             tot_error = 0
             for i in range(len(objpoints)):
                 imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
@@ -91,8 +92,13 @@ def getCameraParams(filepath):
             print(tot_error)
             k +=1
 
-#Concate Videos
+#Concat Videos
 def concatVideos(filepath):
+    '''Functions input is filepath is path to raw video folder
+    If the videos in the folder are multiple parts the function uses ffmpeg to concat the video parts together
+    It saves the concated video to an output folder 
+    '''
+    #Create a txt file for names of video parts 
     cam1vids = open(filepath+'/cam1vids.txt','a')
     cam2vids = open(filepath+'/cam2vids.txt','a')
     cam3vids = open(filepath+'/cam3vids.txt','a')
@@ -133,11 +139,22 @@ def concatVideos(filepath):
 
 #################### Undistortion #########################
 def undistortVideos(Inputfilepath,Outputfilepath):
-    for dir in Inputfilepath:
-        for video in os.listdir(dir):
+    '''Function input is raw distorted videos filepath and the filepath to save the videos to  
+    Uses ffmpeg and camera intrinsics to undistort the video
+    Outputs the undistorted video to the specified file path
+    '''
+    for dir in [Inputfilepath]:#Iterates through the inputfile path 
+        for video in os.listdir(dir):#Iterates through each video in folder
+            #Uses subprocess for a command line prompt to use ffmpeg to undistort video based on intrinsics 
             subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", Outputfilepath+'/'+video])
 
-def trimVideos(Inputfilepath,OutputFilepath):    
+
+def trimVideos(Inputfilepath,OutputFilepath):
+    '''Function input is the filepath for undistorted videos and a filepath for the desired output path
+    The function finds the frame at the beginning and end of the video where a light flash occurs 
+    The video is then trimmed based on those frame numbers
+    Outputs the trimmed video to specified filepath
+    '''    
     vidcap = cv2.VideoCapture(Inputfilepath)#Open video
     vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH) #Get video height
     vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) #Get video width
@@ -145,33 +162,26 @@ def trimVideos(Inputfilepath,OutputFilepath):
     vidLength = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
     vidfps = vidcap.get(cv2.CAP_PROP_FPS)
     success,image = vidcap.read() #read a frame
-    count = [] #Intialize a counter variable
-    avggray = []
-    maxfirstGray = 0
-    maxsecondGray = 0 
+    maxfirstGray = 0 #Intialize the variable for the threshold of the max brightness of beginning of video
+    maxsecondGray = 0 #Intialize the variable for the threshold of the max brightness of end of video
     
-    for jj in range(int(vidLength)):
+    for jj in range(int(vidLength)):#For each frame in the video
         
         success,image = vidcap.read() #read a frame
         if success: #If frame is correctly read
-            if jj < int(vidLength/3):
-                resize = cv2.resize(image, video_resolution) #Set image to same resolution of video
-            
-                gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-                if np.average(gray) > maxfirstGray:
-                    maxfirstGray = np.average(gray)
-                    firstFlashFrame = jj
+            if jj < int(vidLength/3): #If the frame is in the first third of video
+                gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #Convert image to greyscale
+                if np.average(gray) > maxfirstGray:#If the average brightness is greater than the threshold
+                    maxfirstGray = np.average(gray)#That average brightness becomes the threshold
+                    firstFlashFrame = jj#Get the frame number of the brightest frame
             if jj > int((2*vidLength)/3):
-                resize = cv2.resize(image, video_resolution) #Set image to same resolution of video
-            
-                gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-                if np.average(gray) > maxsecondGray:
-                    maxsecondGray = np.average(gray)
-                    secondFlashFrame = jj
-
-        else:
-            continue
-        input1 = ffmpeg.input()
+                gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #Convert image to greyscale
+                if np.average(gray) > maxsecondGray:#If the average brightness is greater than the threshold
+                    maxsecondGray = np.average(gray)#That average brightness becomes the threshold
+                    secondFlashFrame = jj #Get the frame number of the brightest frame
+        else:#If the frame is not correctly read
+            continue#Continue
+        input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii])
 
         node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')
         node1_1.output(OutputFilepath+'/'+cam_names[ii]).run()
@@ -266,6 +276,7 @@ def Parse_Openpose(Inputfilepath,OutputFilepath):
                     ii = ii +1 
                 k= k +1
             j = j + 1
+    return points_inFrame
 
     #Create a list variable to store all frame numbers where there is no person in frame
     noPersonInFrame =[]
@@ -340,19 +351,12 @@ def Parse_Openpose(Inputfilepath,OutputFilepath):
     return noPersonInFrame
 
 
-''' 
-FIX This Put in Undistorting function
-###############If you need To use checkerboard videos##################
-
-if useCheckerboardVid:
+def checkerBoardUndistort(Inputfilepath,OutputFilepath):
     checkerDatadir = [checkerVideoFolder]   
 
-#Create a folder for the undistorted videos
-    if not os.path.exists(interfilepath + '/CheckerboardUndistorted'):
-        os.mkdir(interfilepath + '/CheckerboardUndistorted')
-    checkerUndistortFilepath = interfilepath + '/CheckerboardUndistorted'
+
+    
     
     for dir in checkerDatadir:
         for video in os.listdir(dir):
             subprocess.call(['ffmpeg', '-i', checkerVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", checkerUndistortFilepath+'/'+video])
-'''

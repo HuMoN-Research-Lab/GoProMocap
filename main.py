@@ -9,9 +9,9 @@ from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from EditVideoRunOpandDLC import getCamParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose
+from EditVideoRunOpandDLC import getCamParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 import subprocess
-from create_project import openposeOutputFilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
+from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
 
 
 #=========================Create Folders for project
@@ -22,13 +22,18 @@ if calibrateCameras:
 #===========================Concat,Undistort and Trim Videos 
 concatVideos(combinedFilepath)
 undistortVideos(combinedFilepath,undistortedFilepath)
+if useCheckerboardVid == True:
+    if not os.path.exists(interfilepath + '/CheckerboardUndistorted'):
+        os.mkdir(interfilepath + '/CheckerboardUndistorted')
+    checkerUndistortFilepath = interfilepath + '/CheckerboardUndistorted'
+    checkerBoardUndistort(checkerVideoFolder,checkerUndistortFilepath)
 trimVideos(undistortedFilepath,trimFilepath)
 
 #==========================Run deeplabcut and parse through output
 runDeepLabCut(trimFilepath,DLCfilepath)
 #==========================Run OpenPose and parse through output
 runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
-Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
+points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -102,7 +107,7 @@ if num_of_cameras == 4:
 #==================load image from videos 
 for path in Source_video_List:
     video_resolution = video_loader(path[0],path[1])
-'''
+
 #==================load pixel data to a dictionary
 pixelCoord = {}
 if include_DLC:
@@ -120,7 +125,7 @@ else:
         pixelCoord[path[1]] = np.load(path[0],allow_pickle = True)
         pixelCoord[path[1]] = pixelCoord[path[1]][start_frame:start_frame+Len_of_frame,:,:]
 
-'''
+
 #================== calibrate the cameras
 
 _,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],video_resolution)
@@ -435,6 +440,6 @@ if num_of_cameras == 4:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],C).display()
 
 #============================Blender Animation
-#fileLoc = os.path.dirname(os.path.abspath(__file__))
-#os.chdir(fileLoc)
-#subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
+fileLoc = os.path.dirname(os.path.abspath(__file__))
+os.chdir(fileLoc)
+subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
