@@ -70,7 +70,7 @@ def runOPandDLC():
         os.mkdir(interfilepath+'/VideoOutput')
     videoOutputFilepath = interfilepath+'/VideoOutput'
     
-    
+    '''
     ####################### Join video parts together ###################### 
     #create a text file for each camera 
     cam1vids = open(rawVideoFolder+'/cam1vids.txt','w')
@@ -123,15 +123,19 @@ def runOPandDLC():
             k2 = -abs(dist[0][1])
             subprocess.call(['ffmpeg', '-i', combinedFilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1="+str(k1)+":k2="+str(k2), undistortedFilepath+'/'+video])
         k+=1
-   
     
+
     for dir in rawDatadir:
         for video in os.listdir(dir):
            subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.1432:k2=-0.042", baseFilePath+'/Intermediate/Undistorted/'+video])
     
+    for dir in rawDatadir:
+        for video in os.listdir(dir):
+           subprocess.call(['ffmpeg', '-i', rawVideoFolder+'/'+video,  undistortedFilepath+'/'+video])
 
-    
+    '''    
     if include_DLC:
+        
         #####################Copy Videos to DLC Folder############
         for dir in undistortDatadir:
             for video in os.listdir(dir):
@@ -143,20 +147,20 @@ def runOPandDLC():
         for dir in DLCDatadir:# Loop through the undistorted folder
             for video in os.listdir(dir):
                 #Analyze the videos through deeplabcut
-                deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [DLCfilepath +'/'+ video], save_as_csv=True)
-                deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[DLCfilepath +'/'+ video])
+                deeplabcut.analyze_videos('D:/Juggling'+'/'+DLCconfigPath, [DLCfilepath +'/'+ video], save_as_csv=True)
+                deeplabcut.plot_trajectories('D:/Juggling'+'/'+DLCconfigPath,[DLCfilepath +'/'+ video])
         
         for dir in DLCDatadir:
             for video in dir:   
-                deeplabcut.create_labeled_video(baseProjectPath+'/'+DLCconfigPath, glob.glob(os.path.join(DLCfilepath ,'*mp4')))
-        
-       
+                deeplabcut.create_labeled_video('D:/Juggling'+'/'+DLCconfigPath, glob.glob(os.path.join(DLCfilepath ,'*mp4')))
+    '''    
+    
     ###################### OpenPose ######################################
     os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
     for dir in undistortDatadir:# loop through undistorted folder
         for video in os.listdir(dir):
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', undistortedFilepath+'/'+video, '--hand','--write_video', videoOutputFilepath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', openposeRawFilepath+'/'+cam_names[j]])
+            subprocess.call(['bin/OpenPoseDemo.exe', '--video', undistortedFilepath+'/'+video,'--frame_rotate=90', '--hand','--face','--write_video', videoOutputFilepath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', openposeRawFilepath+'/'+cam_names[j]])
             j = j +1
     
     
@@ -206,4 +210,5 @@ def runOPandDLC():
                     ii +=1 
                 k+=1
             j+= 1
-#runOPandDLC()
+    '''
+runOPandDLC()

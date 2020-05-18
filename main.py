@@ -29,7 +29,7 @@ input("Press enter when finished moving videos to correct folder")
 #=====================Run OpenPose and DeepLabCut and parse through the output
 runOPandDLC()
 Parse_OpenPose()
-#Parse_dlc()
+Parse_dlc()
 
 #========================Get source video
 if useCheckerboardVid == True:

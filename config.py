@@ -6,22 +6,22 @@ __author__ = 'Yifan'
 #USER INPUT
 
 #Intials of subject
-subject = 'CJC'
+subject = 'JSM'
 
 # Project Name
 project = 'Juggling'
 
 #Enter date in format YYYYMMDD
-date = '20200504'
+date = '20200512'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = 'TEST3'
+session_num = '0001'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'D:/Juggling'
 
 #Enter the Camera Names
-cam_names = ['CamA','CamB','CamC','CamD']
+cam_names = ['CamE','CamF','CamG','CamH']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
@@ -29,6 +29,7 @@ DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
 #If you need to use a short clip of checkerboard set as true
 useCheckerboardVid = False
 
+#Do you need to undis
 #If you need to get camera parameters set to true( If first time processing set to true)
 getCamParameters = True
 
@@ -37,10 +38,10 @@ num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 camer
 base_Cam_Index = 'CamA'  #Put same name as you did in cam_names
 
 #What features from video you are tracking
-include_DLC = False
+include_DLC = True
 include_OpenPoseSkeleton = True
-include_OpenPoseHands = False
-include_OpenPoseFace = False
+include_OpenPoseHands = True
+include_OpenPoseFace = True
 
 #What frame of video you want to start reconstruction
 start_frame = 0
