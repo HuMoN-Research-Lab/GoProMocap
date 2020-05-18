@@ -155,55 +155,63 @@ def trimVideos(Inputfilepath,OutputFilepath):
     The video is then trimmed based on those frame numbers
     Outputs the trimmed video to specified filepath
     '''    
-    vidcap = cv2.VideoCapture(Inputfilepath)#Open video
-    vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH) #Get video height
-    vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) #Get video width
-    video_resolution = (int(vidWidth),int(vidHeight)) #Create variable for video resolution
-    vidLength = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
-    vidfps = vidcap.get(cv2.CAP_PROP_FPS)
-    success,image = vidcap.read() #read a frame
-    maxfirstGray = 0 #Intialize the variable for the threshold of the max brightness of beginning of video
-    maxsecondGray = 0 #Intialize the variable for the threshold of the max brightness of end of video
-    
-    for jj in range(int(vidLength)):#For each frame in the video
-        
+    for ii in range(len(cam_names)):
+        vidcap = cv2.VideoCapture(Inputfilepath+'/'+cam_names[ii])#Open video
+        vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH) #Get video height
+        vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) #Get video width
+        video_resolution = (int(vidWidth),int(vidHeight)) #Create variable for video resolution
+        vidLength = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+        vidfps = vidcap.get(cv2.CAP_PROP_FPS)
         success,image = vidcap.read() #read a frame
-        if success: #If frame is correctly read
-            if jj < int(vidLength/3): #If the frame is in the first third of video
-                gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #Convert image to greyscale
-                if np.average(gray) > maxfirstGray:#If the average brightness is greater than the threshold
-                    maxfirstGray = np.average(gray)#That average brightness becomes the threshold
-                    firstFlashFrame = jj#Get the frame number of the brightest frame
-            if jj > int((2*vidLength)/3):
-                gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #Convert image to greyscale
-                if np.average(gray) > maxsecondGray:#If the average brightness is greater than the threshold
-                    maxsecondGray = np.average(gray)#That average brightness becomes the threshold
-                    secondFlashFrame = jj #Get the frame number of the brightest frame
-        else:#If the frame is not correctly read
-            continue#Continue
-        input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii])
+        maxfirstGray = 0 #Intialize the variable for the threshold of the max brightness of beginning of video
+        maxsecondGray = 0 #Intialize the variable for the threshold of the max brightness of end of video
+        
+        for jj in range(int(vidLength)):#For each frame in the video
+            
+            success,image = vidcap.read() #read a frame
+            if success: #If frame is correctly read
+                if jj < int(vidLength/3): #If the frame is in the first third of video
+                    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #Convert image to greyscale
+                    if np.average(gray) > maxfirstGray:#If the average brightness is greater than the threshold
+                        maxfirstGray = np.average(gray)#That average brightness becomes the threshold
+                        firstFlashFrame = jj#Get the frame number of the brightest frame
+                if jj > int((2*vidLength)/3):
+                    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #Convert image to greyscale
+                    if np.average(gray) > maxsecondGray:#If the average brightness is greater than the threshold
+                        maxsecondGray = np.average(gray)#That average brightness becomes the threshold
+                        secondFlashFrame = jj #Get the frame number of the brightest frame
+            else:#If the frame is not correctly read
+                continue#Continue
+            input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii])#input for ffmpeg
 
-        node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')
-        node1_1.output(OutputFilepath+'/'+cam_names[ii]).run()
+            node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')#Trim video based on the frame numbers
+            node1_1.output(OutputFilepath+'/'+cam_names[ii]).run()#Save to output folder
 
 def runDeepLabCut(Inputfilepath,OutputFilepath):
+    '''Function inputs are filepath to videos to be tracked by DLC and the folder to save the output to
+    Videos are copied to output folder, than processed in DLC based on the dlc config path 
+    DLC output is saved in outputfilepath and the output is also converted to npy and saved as well
+    '''
     #####################Copy Videos to DLC Folder############
-    for dir in [Inputfilepath]:
-        for video in os.listdir(dir):
+    for dir in [Inputfilepath]:#Iterates through input folder
+        for video in os.listdir(dir):#Iterates through each video in folder
+            #ffmpeg call to copy videos to dlc folder
             subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+video,  OutputFilepath+'/'+video])
 
 
     #################### DeepLabCut ############################
-    for dir in [OutputFilepath]:# Loop through the undistorted folder
+    for dir in [OutputFilepath]:# Loop through dlc folder
         for video in os.listdir(dir):
             #Analyze the videos through deeplabcut
             deeplabcut.analyze_videos(baseProjectPath+'/'+DLCconfigPath, [OutputFilepath +'/'+ video], save_as_csv=True)
             deeplabcut.plot_trajectories(baseProjectPath+'/'+DLCconfigPath,[OutputFilepath +'/'+ video])
 
-    for dir in [OutputFilepath]:
-        for video in dir:   
+    for dir in [OutputFilepath]:#Loop through dlc folder
+        for video in dir:# for each video in folder
+            #Create a DLC video   
             deeplabcut.create_labeled_video(baseProjectPath+'/'+DLCconfigPath, glob.glob(os.path.join(OutputFilepath ,'*mp4')))
 
+    #If there is not a folder for dlc npy output, create one
     if not os.path.exists(OutputFilepath + 'DLCnpy'):
         os.mkdir(OutputFilepath+ 'DLCnpy')
 
@@ -221,6 +229,10 @@ def runDeepLabCut(Inputfilepath,OutputFilepath):
         j = j+1
 
 def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
+    '''Function inputs are the undistorted video filepath, the filepath to save the video output, and the filepath to save the data output
+    The function takes the undistorted video and processes the videos in openpose
+    The output is openpose overlayed videos and raw openpose data
+    '''
     ###################### OpenPose ######################################
     os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
@@ -228,12 +240,13 @@ def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
         for video in os.listdir(dir):
             subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+video, '--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[j]])
             j =+1
-
-
-
-    ########## Put Openpose Data into h5   ######################
-    
+   
 def Parse_Openpose(Inputfilepath,OutputFilepath):
+    '''Function inputs is the filepath to rawopenpose data and the filepath to where to save the parsed openpose data
+    Function takes the raw openpose data and organizes in a h5 file, that h5 file is then opened and the data is saved as an npy file
+    Outputs one h5 file and an npy file for each camera and returns the amount of points in the frame
+    '''
+    #Establish how many points are being used from the user input
     if include_OpenPoseFace:
         points_from_face = 70
     else:
@@ -346,17 +359,16 @@ def Parse_Openpose(Inputfilepath,OutputFilepath):
             ret = np.array(ret)
             print(ret.shape)
             np.save(OutputFilepath+'/OP_'+cam_names[k]+'.npy',ret)
-            #np.savetxt(outputfileDict+'/OP_'+cam_names[k]+'.txt',ret[:,8,:])
             k  = k+1
     return noPersonInFrame
 
 
 def checkerBoardUndistort(Inputfilepath,OutputFilepath):
-    checkerDatadir = [checkerVideoFolder]   
-
-
-    
-    
+    '''Function input is raw distorted checkerboard videos filepath and the filepath to save the videos to  
+    Uses ffmpeg and camera intrinsics to undistort the video
+    Outputs the undistorted video to the specified file path
+    '''
+    checkerDatadir = [Inputfilepath]   
     for dir in checkerDatadir:
         for video in os.listdir(dir):
-            subprocess.call(['ffmpeg', '-i', checkerVideoFolder+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", checkerUndistortFilepath+'/'+video])
+            subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", OutputFilepath+'/'+video])
