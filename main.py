@@ -9,7 +9,7 @@ from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from EditVideoRunOpandDLC import getCamParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
+from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 import subprocess
 from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
 
@@ -18,9 +18,9 @@ from create_project import openposeOutputFilepath,interfilepath, checkerVideoFol
 create_project()
 
 if calibrateCameras:
-    getCamParams(calibrationFilePath)
+    getCameraParams(calibrationFilePath)
 #===========================Concat,Undistort and Trim Videos 
-concatVideos(combinedFilepath)
+concatVideos(rawVideoFolder,combinedFilepath)
 undistortVideos(combinedFilepath,undistortedFilepath)
 if useCheckerboardVid == True:
     if not os.path.exists(interfilepath + '/CheckerboardUndistorted'):
