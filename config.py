@@ -6,22 +6,22 @@ __author__ = 'Yifan'
 #USER INPUT
 
 #Intials of subject
-subject = 'CJC'
+subject = 'JSM'
 
 # Project Name
 project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
-date = '20200416'
+date = '20200512'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0009'
+session_num = '0001'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'C:/Users/chris/JugglingProject'
 
 #Enter the Camera Names
-cam_names = ['CamA','CamB','CamC','CamD']
+cam_names = ['CamE','CamF','CamG','CamH']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
@@ -29,6 +29,7 @@ DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
 #If you need to use a short clip of checkerboard set as true
 useCheckerboardVid = False
 
+#Do you need to undis
 #If you need to get camera parameters set to true( If first time processing set to true)
 calibrateCameras = False
 
