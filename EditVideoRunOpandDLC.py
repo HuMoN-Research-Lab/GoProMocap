@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import ffmpeg
 import cv2
-#import deeplabcut
+import deeplabcut
 from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
@@ -98,6 +98,7 @@ def concatVideos(InputFilePath,OutputFilepath):
     If the videos in the folder are multiple parts the function uses ffmpeg to concat the video parts together
     It saves the concated video to an output folder 
     '''
+
     #Create a txt file for names of video parts 
     cam1vids = open(InputFilePath+'/cam1vids.txt','a')
     cam2vids = open(InputFilePath+'/cam2vids.txt','a')
@@ -106,19 +107,27 @@ def concatVideos(InputFilePath,OutputFilepath):
     for dir in [rawVideoFolder]: #for loop parses through the resized video folder 
         for video in os.listdir(dir): 
             #Get length of the name of cameras
-            cam1length = len(cam_names[0]); cam2length = len(cam_names[1]); cam3length = len(cam_names[2]); cam4length = len(cam_names[3]); 
-            if video[:cam1length] == cam_names[0]: # if the video is from Cam1
-                cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam1vids.write('\n')                     
-            if video[:cam2length] == cam_names[1]: # if the video is from Cam2
-                cam2vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam2vids.write('\n')                   
-            if video[:cam3length] == cam_names[2]: # if the video is from Cam3
-                cam3vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam3vids.write('\n') 
-            if video[:cam4length] == cam_names[3]: # if the video is from Cam4
-                cam4vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam4vids.write('\n')                     
+            #cam1length = len(cam_names[0]); cam2length = len(cam_names[1]); cam3length = len(cam_names[2]); cam4length = len(cam_names[3]); 
+            if len(cam_names) > 0:
+                cam1length = len(cam_names[0])
+                if video[:cam1length] == cam_names[0]: # if the video is from Cam1
+                    cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam1vids.write('\n')                     
+            if len(cam_names) > 1:
+                cam2length = len(cam_names[1])
+                if video[:cam2length] == cam_names[1]: # if the video is from Cam2
+                    cam2vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam2vids.write('\n')                   
+            if len(cam_names) > 2:
+                cam3length = len(cam_names[2])
+                if video[:cam3length] == cam_names[2]: # if the video is from Cam3
+                    cam3vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam3vids.write('\n') 
+            if len(cam_names) > 3:
+                cam4length = len(cam_names[3])
+                if video[:cam4length] == cam_names[3]: # if the video is from Cam4
+                    cam4vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam4vids.write('\n')                     
     #Close the text files
     cam1vids.close()
     cam2vids.close()
@@ -128,7 +137,7 @@ def concatVideos(InputFilePath,OutputFilepath):
     for jj in range(len(cam_names)):
         (ffmpeg
         .input(InputFilePath+'/cam'+str(jj+1)+'vids.txt', format='concat', safe=0)
-        .output(OutputFilepath+'/cam'+str(jj+1)+'.mp4', c='copy')
+        .output(OutputFilepath+'/'+cam_names[jj]+'.mp4', c='copy')
         .run()
         )
     #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath+'/cam1vids.txt', '-c' ,'copy' ,filepath+'/'+ cam1+'.mp4'])

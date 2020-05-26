@@ -3,17 +3,19 @@ import matplotlib.pyplot as plt
 import os
 import cv2
 import pickle
-from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateTest
+from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateFlex,triangulateTest
 from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton, calibrateCameras
+#from visulize_with_out_head import Vis
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
-import subprocess
 from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
+from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 
 
+
+base_cam = {'A':0,'B':1,'C':2,'D':3}
 #=========================Create Folders for project
 create_project()
 
@@ -32,8 +34,9 @@ trimVideos(undistortedFilepath,trimFilepath)
 #==========================Run deeplabcut and parse through output
 runDeepLabCut(trimFilepath,DLCfilepath)
 #==========================Run OpenPose and parse through output
-runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
-points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
+if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenPoseSkeleton == True:
+    runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
+    points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -108,6 +111,7 @@ if num_of_cameras == 4:
 for path in Source_video_List:
     video_resolution = video_loader(path[0],path[1])
 
+
 #==================load pixel data to a dictionary
 pixelCoord = {}
 if include_DLC:
@@ -115,7 +119,7 @@ if include_DLC:
         skeleton = np.load(path[0],allow_pickle = True)[start_frame:start_frame+Len_of_frame,:,:]
         ball = np.load(path[1],allow_pickle = True)[start_frame:start_frame+Len_of_frame,:]
         ball = ball.astype(float)
-        ball = ball.reshape((-1,1,3))
+        ball = ball.reshape((-1,3,3))
         pixelC = np.concatenate((skeleton,ball),axis=-2)
         pixelCoord[path[-1]] = pixelC
         #pixelCoord[path[-1]] = pixelCoord[path[-1]][start_frame:start_frame+Len_of_frame,:,:]
@@ -126,9 +130,11 @@ else:
         pixelCoord[path[1]] = pixelCoord[path[1]][start_frame:start_frame+Len_of_frame,:,:]
 
 
+
+
 #================== calibrate the cameras
 
-_,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],video_resolution)
+__,K_CamB,B_dist,B_rvecs,B_tvecs = get_RT_mtx(baseFilePath+'/Calibration/'+cam_names[1]+'_Calibration/*jpg',cam_names[1],video_resolution)
 tvec_CamB,rvec_CamB = B_tvecs[0],B_rvecs[0]
 RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
 H_CamB = R_t2H(RoMat_B,tvec_CamB)
@@ -158,85 +164,101 @@ Proj_points = None
 Proj_Mat = None
 
 if num_of_cameras == 4:
-    if base_Cam_Index == cam_names[0]:
+    if base_Cam_Index == 'A':
         MA,MB,MC,MD = get_TransMat(H_CamA,H_CamB,H_CamC,H_CamD)
         PA,PB,PC,PD = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC),np.dot(K_CamD,MD)
-        Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam3],pixelCoord[cam4]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC'],pixelCoord['CamD']),axis = 2)
         Proj_Mat = np.stack((PA,PB,PC,PD),axis=0)
 
-    elif base_Cam_Index == cam_names[1]:
+    elif base_Cam_Index == 'B':
         MB,MA,MC,MD = get_TransMat(H_CamB,H_CamA,H_CamC,H_CamD)
         PB,PA,PC,PD = np.dot(K_CamB,MB),np.dot(K_CamA,MA),np.dot(K_CamC,MC),np.dot(K_CamD,MD)
-        Proj_points = np.stack((pixelCoord[cam2],pixelCoord[cam1],pixelCoord[cam3],pixelCoord[cam4]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA'],pixelCoord['CamC'],pixelCoord['CamD']),axis = 2)
         Proj_Mat = np.stack((PB,PA,PC,PD),axis=0)
 
-    elif base_Cam_Index == cam_names[2]:
+    elif base_Cam_Index == 'C':
         MC,MA,MB,MD = get_TransMat(H_CamC,H_CamA,H_CamB,H_CamD)
         PC,PA,PB,PD = np.dot(K_CamC,MC),np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamD,MD)
-        Proj_points = np.stack((pixelCoord[cam3],pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam4]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamC'],pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamD']),axis = 2)
         Proj_Mat = np.stack((PC,PA,PB,PD),axis=0)
 
-    elif base_Cam_Index == cam_names[3]:
+    elif base_Cam_Index == 'D':
         MD,MA,MB,MC = get_TransMat(H_CamD,H_CamA,H_CamB,H_CamC)
         PD,PA,PB,PC = np.dot(K_CamD,MD),np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC)
-        Proj_points = np.stack((pixelCoord[cam4],pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam3]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamD'],pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']),axis = 2)
         Proj_Mat = np.stack((PD,PA,PB,PC),axis=0)
     
-    BA_points2D = np.stack((pixelCoord[cam1][:,:points_inFrame,:-1],pixelCoord[cam2][:,:points_inFrame,:-1],pixelCoord[cam3][:,:points_inFrame,:-1],pixelCoord[cam4][:,:points_inFrame,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1],pixelCoord['CamC'][:,:25,:-1],pixelCoord['CamD'][:,:25,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel(),Proj_Mat[3].ravel()))
 
 
 
 elif num_of_cameras == 3:
-    if base_Cam_Index == cam_names[0]:
+    if base_Cam_Index == 'A':
         MA,MB,MC = get_TransMat(H_CamA,H_CamB,H_CamC)
         PA,PB,PC = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC)
-        Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2],pixelCoord[cam3]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB'],pixelCoord['CamC']),axis = 2)
         Proj_Mat = np.stack((PA,PB,PC),axis=0)
     
-    elif base_Cam_Index == cam_names[1]:
+    elif base_Cam_Index == 'B':
         MB,MA,MC = get_TransMat(H_CamB,H_CamA,H_CamC)
         PB,PA,PC = np.dot(K_CamB,MB),np.dot(K_CamA,MA),np.dot(K_CamC,MC)
-        Proj_points = np.stack((pixelCoord[cam2],pixelCoord[cam1],pixelCoord[cam3]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA'],pixelCoord['CamC']),axis = 2)
         Proj_Mat = np.stack((PB,PA,PC),axis=0)
     
-    elif base_Cam_Index == cam_names[2]:
+    elif base_Cam_Index == 'C':
         MC,MA,MB = get_TransMat(H_CamC,H_CamA,H_CamB)
         PC,PA,PB = np.dot(K_CamC,MC),np.dot(K_CamA,MA),np.dot(K_CamB,MB)
-        Proj_points = np.stack((pixelCoord[cam3],pixelCoord[cam1],pixelCoord[cam2]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamC'],pixelCoord['CamA'],pixelCoord['CamB']),axis = 2)
         Proj_Mat = np.stack((PC,PA,PB),axis=0)
     
-    BA_points2D = np.stack((pixelCoord[cam1][:,:points_inFrame,:-1],pixelCoord[cam2][:,:points_inFrame,:-1],pixelCoord[cam3][:,:points_inFrame,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1],pixelCoord['CamC'][:,:25,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel(),Proj_Mat[2].ravel()))
     
 elif num_of_cameras == 2:
-    if base_Cam_Index == cam_names[0]:
+    if base_Cam_Index == 'A':
         MA,MB = get_TransMat(H_CamA,H_CamB)
-        PA,PB = np.dot(K_CamA,MA),np.dot(K_CamB,MB) 
-        Proj_points = np.stack((pixelCoord[cam1],pixelCoord[cam2]),axis = 2)
+        PA,PB = np.dot(K_CamA,MA),np.dot(K_CamB,MB)
+        Proj_points = np.stack((pixelCoord['CamA'],pixelCoord['CamB']),axis = 2)
         Proj_Mat = np.stack((PA,PB),axis=0)
     
-    elif base_Cam_Index == cam_names[1]:
+    elif base_Cam_Index == 'B':
         MB,MA = get_TransMat(H_CamB,H_CamA)
         PB,PA = np.dot(K_CamB,MB),np.dot(K_CamA,MA)
-        Proj_points = np.stack((pixelCoord[cam2],pixelCoord[cam1]),axis = 2)
+        Proj_points = np.stack((pixelCoord['CamB'],pixelCoord['CamA']),axis = 2)
         Proj_Mat = np.stack((PB,PA),axis=0)
     
-    BA_points2D = np.stack((pixelCoord[cam1][:,:points_inFrame,:-1],pixelCoord[cam2][:,:points_inFrame,:-1]),axis = 0)
+    BA_points2D = np.stack((pixelCoord['CamA'][:,:25,:-1],pixelCoord['CamB'][:,:25,:-1]),axis = 0)
     input_param = np.hstack((Proj_Mat[0].ravel(),Proj_Mat[1].ravel()))
 
-
-coords,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
+print('Proj points shape:',Proj_points.shape)
+#coords_temp,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
+coords = triangulate(Proj_points,Proj_Mat).solveA()#tranigulate points
 coords = coords[:,:,:-1]
+
+print('coords shape:',coords.shape)
+
+
+# print('valid point length',len(valid_point_list))
+# print('valid',valid_point_list)
+# print('vis cam',VIS_cam_List)
+# valid_point, invalid_point = 0,0
+# for num in valid_point_list:
+#     if num == 0:
+#         invalid_point += 1
+#     else:
+#         valid_point += 1
+
+# print('valid:',valid_point,'invalid:',invalid_point)
 
 
 #===========sparse bundle adjustment
-if include_DLC:
-    ball_points = coords[:,-1,:].reshape((-1,1,3))
+# if include_DLC:
+#     ball_points = coords[:,-1,:].reshape((-1,3,3))
+#     skeleton_points = coords[:,:-3,:]
 
 
-skeleton_points = coords[:,:-1,:]
-input_points = skeleton_points.reshape((-1,))
+input_points = coords.reshape((-1,))
 
 
 ba_input = np.hstack((input_points,input_param))
@@ -278,12 +300,14 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
             reproj1 = x.dot(ProjMats[base_cam[base_Cam_Index]].T)
             reproj2 = np.zeros((Len_of_frame,points_inFrame,3))
             
+            
             for i in range(Len_of_frame):
                 for j in range(points_inFrame):
                     k = i*points_inFrame + j
                     reproj2[i][j] = x[i][j].dot(ProjMats[VIS_cam_List[k]].T)
                     true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
         
+
         elif num_of_cameras == 4:
             l = len(param)//4
             ProjMats = (param[:l].reshape((3,4)),param[l:2*l].reshape((3,4)),param[2*l:3*l].reshape((3,4)),param[3*l:].reshape((3,4)))
@@ -291,13 +315,15 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
             reproj1 = x.dot(ProjMats[base_cam[base_Cam_Index]].T)
             reproj2 = np.zeros((Len_of_frame,points_inFrame,3))
             
+            
             for i in range(Len_of_frame):
                 for j in range(points_inFrame):
                     k = i*points_inFrame + j
                     reproj2[i][j] = x[i][j].dot(ProjMats[VIS_cam_List[k]].T)
                     true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
-            
 
+            
+            
         reproj_points = np.vstack((reproj1,reproj2))
  
         reproj_points = reproj_points[:,:,:2] / reproj_points[:,:,2,np.newaxis]
@@ -316,7 +342,7 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
         A = lil_matrix((m, n), dtype=int)
 
         if num_of_cameras == 2:
-            if base_Cam_Index == cam_names[0]:
+            if base_Cam_Index == 'A':
                 A[:m//2,-24:-12] = 1
                 A[m//2:,-12:] = 1
             else:
@@ -324,11 +350,11 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
                 A[:m//2,-12:] = 1
         
         elif num_of_cameras == 3:
-            if base_Cam_Index == cam_names[0]:
+            if base_Cam_Index == 'A':
                 A[:m//2,-36:-24] = 1
-            elif base_Cam_Index == cam_names[1]:
+            elif base_Cam_Index == 'B':
                 A[:m//2,-24:-12] = 1
-            elif base_Cam_Index == cam_names[2]:
+            elif base_Cam_Index == 'C':
                 A[:m//2,-12:] = 1
             
             for i in range(n_point3D):
@@ -341,13 +367,13 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
                     A[2*i+1,s1:s2] = 1 
         
         elif num_of_cameras == 4:
-            if base_Cam_Index == cam_names[0]:
+            if base_Cam_Index == 'A':
                 A[:m//2,-48:-36] = 1
-            elif base_Cam_Index == cam_names[1]:
+            elif base_Cam_Index == 'B':
                 A[:m//2,-36:-24] = 1
-            elif base_Cam_Index == cam_names[2]:
+            elif base_Cam_Index == 'C':
                 A[:m//2,-24:-12] = 1
-            elif base_Cam_Index == cam_names[3]:
+            elif base_Cam_Index == 'D':
                 A[:m//2,-12:] = 1
             
             for i in range(n_point3D):
@@ -374,7 +400,7 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
     
     
     residual = fun(ba_input)
-    
+    print('max index',np.argmax(residual))
     A = bundle_adjustment_sparsity(Len_of_frame*points_inFrame)
     plt.plot(residual)
     plt.show()
@@ -400,46 +426,50 @@ def SBA(Len_of_frame,ProjMats,points2d,ba_input,VIS_cam_List):
     return coords,Optimized_Proj_mat
 
 print("optimization started")
-C,M = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
 
-if include_DLC:
-    l = len(M)//num_of_cameras
-    
-    if num_of_cameras == 2:
-        P1,P2 = (M[:l].reshape((3,4)),M[l:].reshape((3,4)))
-        Proj_points = Proj_points[:,-1:,:,:]
-        Proj_Mat = np.stack((P1,P2),axis=0)
-    
-    elif num_of_cameras == 3:
-        P1,P2,P3 = M[:l].reshape((3,4)),M[l:2*l].reshape((3,4)),M[2*l:].reshape((3,4))
-        Proj_points = Proj_points[:,-1:,:,:]
-        Proj_Mat = np.stack((P1,P2,P3),axis=0)
-    
-    elif num_of_cameras == 4:
-        P1,P2,P3,P4 = M[:l].reshape((3,4)),M[l:2*l].reshape((3,4)),M[2*l:3*l].reshape((3,4)),M[3*l:].reshape((3,4))
-        Proj_points = Proj_points[:,-1:,:,:]
-        Proj_Mat = np.stack((P1,P2,P3),axis=0)
-
-    
-    coords,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
-    ball_points = coords[:,:,:-1].reshape((-1,1,3))
-
-    C = np.concatenate((C,ball_points),axis=-2)
-
-np.save(baseFilePath+'/Processed/DataPoints3D.npy',C)
+#C,M = SBA(Len_of_frame,Proj_Mat,BA_points2D,ba_input,VIS_cam_List)
+print('coords shape',coords.shape)
+np.save(SAVE_FOLDER+'out_original.npy',coords)
+#np.save(SAVE_FOLDER+'out_optimized.npy',C)
 print('save sussesful')
 
+# if include_DLC:
+#     l = len(M)//num_of_cameras
+    
+#     if num_of_cameras == 2:
+#         P1,P2 = (M[:l].reshape((3,4)),M[l:].reshape((3,4)))
+#         Proj_points = Proj_points[:,-1:,:,:]
+#         Proj_Mat = np.stack((P1,P2),axis=0)
+    
+#     elif num_of_cameras == 3:
+#         P1,P2,P3 = param[:l].reshape((3,4)),param[l:2*l].reshape((3,4)),param[2*l:].reshape((3,4))
+#         Proj_points = Proj_points[:,-1:,:,:]
+#         Proj_Mat = np.stack((P1,P2,P3),axis=0)
+    
+#     elif num_of_cameras == 4:
+#         P1,P2,P3,P4 = param[:l].reshape((3,4)),param[l:2*l].reshape((3,4)),param[2*l:3*l].reshape((3,4)),param[3*l:].reshape((3,4))
+#         Proj_points = Proj_points[:,-1:,:,:]
+#         Proj_Mat = np.stack((P1,P2,P3),axis=0)
+
+    
+#     coords,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
+#     ball_points = coords[:,:,:-1].reshape((-1,1,3))
+
+#     C = np.concatenate((C,ball_points),axis=-2)
+
+  
 
 if num_of_cameras == 3:
-    Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],C).display()
+    Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],coords).display()
 
 elif num_of_cameras == 2:
-    Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],None,C).display()
+    #Vis(SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[0][0],None,C).display()
+    Vis(SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[0][0],None,coords).display()
 
-if num_of_cameras == 4:
+elif num_of_cameras == 4:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],C).display()
+    
 
-#============================Blender Animation
-fileLoc = os.path.dirname(os.path.abspath(__file__))
-os.chdir(fileLoc)
-subprocess.call(['blender', '-b','skeleton-with-hands.blend', '-P', 'create-skeleton-and-mesh.py'])
+
+
+
