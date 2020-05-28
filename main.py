@@ -9,16 +9,16 @@ from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from EditVideoRunOpandDLC import getCamParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
+from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 import subprocess
 from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
-
+from Filters import smoothOpenPose, kalmansmoothReconstruction
 
 #=========================Create Folders for project
 create_project()
 
 if calibrateCameras:
-    getCamParams(calibrationFilePath)
+    getCameraParams(calibrationFilePath)
 #===========================Concat,Undistort and Trim Videos 
 concatVideos(combinedFilepath)
 undistortVideos(combinedFilepath,undistortedFilepath)
@@ -31,9 +31,10 @@ trimVideos(undistortedFilepath,trimFilepath)
 
 #==========================Run deeplabcut and parse through output
 runDeepLabCut(trimFilepath,DLCfilepath)
-#==========================Run OpenPose and parse through output
-runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
+#==========================Run OpenPose and parse through output (and smooth??)
+runOpenPose(trimFilepath,videoOutputFilepath,openposeRawFilepath)
 points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
+smoothOpenPose(openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -428,7 +429,7 @@ if include_DLC:
 
 np.save(baseFilePath+'/Processed/DataPoints3D.npy',C)
 print('save sussesful')
-
+kalmansmoothReconstruction(baseFilePath+'/Processed/DataPoints3D.npy')
 
 if num_of_cameras == 3:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],C).display()

@@ -12,10 +12,10 @@ subject = 'JSM'
 project = 'Juggling'
 
 #Enter date in format YYYYMMDD
-date = '20200512'
+date = '20200527'
 
 #Enter session number as four digits. Example: for session 1, 0001
-session_num = '0001'
+session_num = '0002'
 
 #Base folder path where you would like to save the project to
 baseProjectPath = 'D:/Juggling'
@@ -29,19 +29,21 @@ DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
 #If you need to use a short clip of checkerboard set as true
 useCheckerboardVid = False
 
-#Do you need to undis
+#If videos were recorded in portrait mode, set as true
+portraitMode = True
+
 #If you need to get camera parameters set to true( If first time processing set to true)
-getCamParameters = True
+calibrateCameras = False
 
 #If the go pro videos get cut into two videos  
 num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
-base_Cam_Index = 'CamA'  #Put same name as you did in cam_names
+base_Cam_Index = 'Camf'  #Put same name as you did in cam_names
 
 #What features from video you are tracking
 include_DLC = True
 include_OpenPoseSkeleton = True
 include_OpenPoseHands = True
-include_OpenPoseFace = True
+include_OpenPoseFace = False
 
 #What frame of video you want to start reconstruction
 start_frame = 0
