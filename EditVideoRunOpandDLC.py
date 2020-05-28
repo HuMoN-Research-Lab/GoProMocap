@@ -94,32 +94,41 @@ def getCameraParams(filepath):
             k +=1
 
 #Concat Videos
-def concatVideos(filepath):
+def concatVideos(InputFilePath,OutputFilepath):
     '''Functions input is filepath is path to raw video folder
     If the videos in the folder are multiple parts the function uses ffmpeg to concat the video parts together
     It saves the concated video to an output folder 
     '''
+
     #Create a txt file for names of video parts 
-    cam1vids = open(filepath+'/cam1vids.txt','a')
-    cam2vids = open(filepath+'/cam2vids.txt','a')
-    cam3vids = open(filepath+'/cam3vids.txt','a')
-    cam4vids = open(filepath+'/cam4vids.txt','a')
+    cam1vids = open(InputFilePath+'/cam1vids.txt','a')
+    cam2vids = open(InputFilePath+'/cam2vids.txt','a')
+    cam3vids = open(InputFilePath+'/cam3vids.txt','a')
+    cam4vids = open(InputFilePath+'/cam4vids.txt','a')
     for dir in [rawVideoFolder]: #for loop parses through the resized video folder 
         for video in os.listdir(dir): 
             #Get length of the name of cameras
-            cam1length = len(cam_names[0]); cam2length = len(cam_names[1]); cam3length = len(cam_names[2]); cam4length = len(cam_names[3]); 
-            if video[:cam1length] == cam_names[0]: # if the video is from Cam1
-                cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam1vids.write('\n')                     
-            if video[:cam2length] == cam_names[1]: # if the video is from Cam2
-                cam2vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam2vids.write('\n')                   
-            if video[:cam3length] == cam_names[2]: # if the video is from Cam3
-                cam3vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam3vids.write('\n') 
-            if video[:cam4length] == cam_names[3]: # if the video is from Cam4
-                cam4vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
-                cam4vids.write('\n')                     
+            #cam1length = len(cam_names[0]); cam2length = len(cam_names[1]); cam3length = len(cam_names[2]); cam4length = len(cam_names[3]); 
+            if len(cam_names) > 0:
+                cam1length = len(cam_names[0])
+                if video[:cam1length] == cam_names[0]: # if the video is from Cam1
+                    cam1vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam1vids.write('\n')                     
+            if len(cam_names) > 1:
+                cam2length = len(cam_names[1])
+                if video[:cam2length] == cam_names[1]: # if the video is from Cam2
+                    cam2vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam2vids.write('\n')                   
+            if len(cam_names) > 2:
+                cam3length = len(cam_names[2])
+                if video[:cam3length] == cam_names[2]: # if the video is from Cam3
+                    cam3vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam3vids.write('\n') 
+            if len(cam_names) > 3:
+                cam4length = len(cam_names[3])
+                if video[:cam4length] == cam_names[3]: # if the video is from Cam4
+                    cam4vids.write('file'+" '" +'\\'+video+"'") #write the file name of the video to the text file
+                    cam4vids.write('\n')                     
     #Close the text files
     cam1vids.close()
     cam2vids.close()
@@ -128,8 +137,8 @@ def concatVideos(filepath):
     #Use ffmpeg to join all parts of the video together
     for jj in range(len(cam_names)):
         (ffmpeg
-        .input(filepath+'/'+cam_names[jj]+'vids.txt', format='concat', safe=0)
-        .output(filepath+'/'+cam_names[jj]+'.mp4', c='copy')
+        .input(InputFilePath+'/cam'+str(jj+1)+'vids.txt', format='concat', safe=0)
+        .output(OutputFilepath+'/'+cam_names[jj]+'.mp4', c='copy')
         .run()
         )
     #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath+'/cam1vids.txt', '-c' ,'copy' ,filepath+'/'+ cam1+'.mp4'])
@@ -144,10 +153,9 @@ def undistortVideos(Inputfilepath,Outputfilepath):
     Uses ffmpeg and camera intrinsics to undistort the video
     Outputs the undistorted video to the specified file path
     '''
-    for dir in [Inputfilepath]:#Iterates through the inputfile path 
-        for video in os.listdir(dir):#Iterates through each video in folder
-            #Uses subprocess for a command line prompt to use ffmpeg to undistort video based on intrinsics 
-            subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", Outputfilepath+'/'+video])
+    for jj in range(len(cam_names)):
+        #Uses subprocess for a command line prompt to use ffmpeg to undistort video based on intrinsics 
+        subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", Outputfilepath+'/'+cam_names[jj]+'.mp4'])
 
 
 def trimVideos(Inputfilepath,OutputFilepath):

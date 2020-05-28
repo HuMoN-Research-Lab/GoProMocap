@@ -9,7 +9,7 @@ __author__ = 'Yifan'
 subject = 'JSM'
 
 # Project Name
-project = 'Juggling'
+project = 'JugglingPractice'
 
 #Enter date in format YYYYMMDD
 date = '20200527'
@@ -18,10 +18,10 @@ date = '20200527'
 session_num = '0002'
 
 #Base folder path where you would like to save the project to
-baseProjectPath = 'D:/Juggling'
+baseProjectPath = 'C:/Users/chris/JugglingProject'
 
 #Enter the Camera Names
-cam_names = ['CamE','CamF','CamG','CamH']
+cam_names = ['CamA']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
@@ -37,10 +37,11 @@ calibrateCameras = False
 
 #If the go pro videos get cut into two videos  
 num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
-base_Cam_Index = 'Camf'  #Put same name as you did in cam_names
+base_Cam_Index = 'CamF'  #Put same name as you did in cam_names
 
 #What features from video you are tracking
 include_DLC = True
+
 include_OpenPoseSkeleton = True
 include_OpenPoseHands = True
 include_OpenPoseFace = False

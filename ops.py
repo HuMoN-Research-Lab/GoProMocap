@@ -10,16 +10,12 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import re
 from config import num_of_cameras,useCheckerboardVid, cam_names
 from create_project import baseFilePath, checkerVideoFolder, rawVideoFolder
 
 
 
-
-if useCheckerboardVid == True:
-    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
-else: 
-    SourceVideoFolder = baseFilePath + '/Intermediate/Undistorted'
 
 class Exceptions(Exception):
     pass
@@ -96,7 +92,7 @@ def R_t2H(R,T):
     return ret
 
 
-def get_RT_mtx(path,cam_name,video_resolution):
+def get_RT_mtx(path,Cam_indx,video_resolution):
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -109,6 +105,7 @@ def get_RT_mtx(path,cam_name,video_resolution):
     imgpoints = [] # 2d points in image plane.
 
     images = glob.glob(path)
+    images.sort(key=lambda f: int(re.sub('\D', '', f)))
     count = 0
     for fname in images:
         img = cv2.imread(fname)
@@ -116,7 +113,7 @@ def get_RT_mtx(path,cam_name,video_resolution):
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners   
-        ret, corners = cv2.findChessboardCorners(gray, (6,9),None)
+        ret, corners = cv2.findChessboardCorners(gray, (9,6),None)
 
         # If found, add object points, image points (after refining them)
         if ret == True:
@@ -126,7 +123,6 @@ def get_RT_mtx(path,cam_name,video_resolution):
             imgpoints.append(corners2)
 
             # Draw and display the corners
-            print('Pass')
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)
             img = cv2.drawChessboardCorners(img, (6,9), corners2,ret)
             cv2.imshow('img',img)
@@ -134,21 +130,17 @@ def get_RT_mtx(path,cam_name,video_resolution):
     
         count += 1
         print(count)
-    print(cam_name)    
+
     cv2.destroyAllWindows()
 
     #=================store camera information
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-    
-    if not os.path.exists(baseFilePath + '/Calibration/CameraINFO'):
-        os.mkdir(baseFilePath + '/Calibration/CameraINFO')
-    
-    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_ret.npy',ret)
-    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_mtx.npy',mtx)
-    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_dist.npy',dist)
-    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_rvec.npy',rvecs)
-    np.save(baseFilePath + '/Calibration/CameraINFO/'+cam_name+'_tvecs.npy',tvecs)
-      
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_ret.npy',ret)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_mtx.npy',mtx)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_dist.npy',dist)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_rvec.npy',rvecs)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_tvecs.npy',tvecs)
+
     return ret,mtx,dist,rvecs,tvecs
 
 
@@ -202,7 +194,6 @@ def video_loader(fileName,Cam_Indx):
                     else:
                         break
     return video_resolution
-                 
 
 
 
@@ -312,7 +303,76 @@ class triangulateTest:
                 X[i,k] = P
         
         return X,vis_list
+
+
+
+#=====================pick best angle version and discard
+class triangulateFlex:
+    """
+    ImgPoints: a (frame,#_of_keypoints,#_of_views,3) matrix -> (x,y,prob)
+    ProjectMat: a Mx3x4 matrix, M is number of views, each views has its 3x4 projection matrix
+    """
+    
+    def __init__(self,ImgPoints,ProjectMat,base_cam):
         
+        self.ImgPoints = ImgPoints
+        self.ProjectMat = ProjectMat
+        self.base_cam = base_cam
+    
+
+    def solveA(self): 
+
+        if self.ImgPoints.shape[2] != len(self.ProjectMat):
+            raise Exceptions('number of views must be equal to number of projection matrix')
+        
+        N_views = len(self.ProjectMat)
+        A = np.zeros((N_views*2,4)) #prepare svd matrix A
+        X = np.zeros((self.ImgPoints.shape[0],self.ImgPoints.shape[1],4))
+        #vis_list = {}
+        vis_list = []
+        valid_point_list = []
+        
+        for i in range(self.ImgPoints.shape[0]): #for each point
+            
+            for k in range(self.ImgPoints.shape[1]):
+                
+                v_indx,max_ = -1.0,-1.0
+                for view_index in range(self.ImgPoints.shape[2]):
+                    if view_index == self.base_cam:
+                        continue
+                    elif self.ImgPoints[i,k,view_index,2] > max_:
+                        max_ = self.ImgPoints[i,k,view_index,2]
+                        v_indx = view_index
+                
+                #vis_list[(i,k)] = v_indx
+                vis_list.append(v_indx)
+                
+                #========================remove point module
+                if min(self.ImgPoints[i,k,self.base_cam,2],self.ImgPoints[i,k,v_indx,2]) < 0.4:
+                    valid_point_list.append(0)
+                else:
+                    valid_point_list.append(1)
+                
+                view_list = [self.base_cam,v_indx] #for each frame
+                
+                for j in view_list: #for each view            
+                    u,v = self.ImgPoints[i,k,j,0],self.ImgPoints[i,k,j,1] #initialize x,y points
+                    
+                    for col in range(4):
+                        A[j*2+0,col] = u*self.ProjectMat[j,2,col] - self.ProjectMat[j,0,col]
+                        A[j*2+1,col] = v*self.ProjectMat[j,2,col] - self.ProjectMat[j,1,col]
+        
+                A1 = np.zeros((4,4))
+                A1[0,:] = A[view_list[0]*2,:]
+                A1[1,:] = A[view_list[0]*2+1,:]
+                A1[2,:] = A[view_list[1]*2,:]
+                A1[3,:] = A[view_list[1]*2+1,:]
+                U,s,V = np.linalg.svd(A1)
+                P = V[-1,:] / V[-1,-1]
+                #X[i] = P[:-1]
+                X[i,k] = P
+        
+        return X,vis_list,valid_point_list
 
 
 
