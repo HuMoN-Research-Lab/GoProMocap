@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import ffmpeg
 import cv2
-import deeplabcut
+#import deeplabcut
 from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
@@ -242,7 +242,7 @@ def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
     The output is openpose overlayed videos and raw openpose data
     '''
     ###################### OpenPose ######################################
-    os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
+    #os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
     for dir in [Inputfilepath]:# loop through undistorted folder
         for video in os.listdir(dir):

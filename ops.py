@@ -11,11 +11,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import re
-from config import num_of_cameras,useCheckerboardVid, cam_names
+import cv2.aruco as aruco
+from config import num_of_cameras,useCheckerboardVid, cam_names, import_camera_intrinsic, import_camera_parameters
 from create_project import baseFilePath, checkerVideoFolder, rawVideoFolder
 
 
 
+if useCheckerboardVid == True:
+    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
+else: 
+    SourceVideoFolder = baseFilePath + '/Intermediate/Trimmed'
 
 class Exceptions(Exception):
     pass
@@ -97,8 +102,8 @@ def get_RT_mtx(path,Cam_indx,video_resolution):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-    objp = np.zeros((9*6,3), np.float32)
-    objp[:,:2] = np.mgrid[0:6,0:9].T.reshape(-1,2)
+    objp = np.zeros((6*9,3), np.float32)
+    objp[:,:2] = np.mgrid[0:6,0:9].T.reshape(-1,2)*25
 
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
@@ -113,20 +118,20 @@ def get_RT_mtx(path,Cam_indx,video_resolution):
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners   
-        ret, corners = cv2.findChessboardCorners(gray, (9,6),None)
+        ret, corners = cv2.findChessboardCorners(gray, (6,9),None)
 
         # If found, add object points, image points (after refining them)
         if ret == True:
             objpoints.append(objp)
 
-            corners2 = cv2.cornerSubPix(gray,corners,(5,5),(-1,-1),criteria)
+            corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
             imgpoints.append(corners2)
 
             # Draw and display the corners
             cv2.namedWindow("output", cv2.WINDOW_NORMAL)
             img = cv2.drawChessboardCorners(img, (6,9), corners2,ret)
             cv2.imshow('img',img)
-            cv2.waitKey(500)
+            cv2.waitKey(50)
     
         count += 1
         print(count)
@@ -135,11 +140,13 @@ def get_RT_mtx(path,Cam_indx,video_resolution):
 
     #=================store camera information
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_ret.npy',ret)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_mtx.npy',mtx)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_dist.npy',dist)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_rvec.npy',rvecs)
-    np.save('CameraINFO/Cam'+str(Cam_indx)+'_tvecs.npy',tvecs)
+    if not os.path.exists(baseFilePath + '/Calibration/CameraINFO'):
+        os.mkdir(baseFilePath + '/Calibration/CameraINFO')
+    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_ret.npy',ret)
+    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_mtx.npy',mtx)
+    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_dist.npy',dist)
+    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_rvec.npy',rvecs)
+    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_tvecs.npy',tvecs)
 
     return ret,mtx,dist,rvecs,tvecs
 
@@ -161,6 +168,8 @@ def video_loader(fileName,Cam_Indx):
     
     for dir in datadir:
         for video in os.listdir(dir):
+            print(video)
+            print(fileName)
             if video == fileName:
                 
                 vidcap = cv2.VideoCapture(os.path.join(dir,video))
@@ -375,6 +384,153 @@ class triangulateFlex:
         return X,vis_list,valid_point_list
 
 
+def aruco_detect(path,Cam_indx,video_resolution):
+
+    if not import_camera_intrinsic:
+        _,K,dist,_,_ = get_RT_mtx(path,Cam_indx,video_resolution)
+    else:
+        K = np.load(baseFilePath+'/Calibration/CameraParams/'+str(Cam_indx)+'Calibration_mtx.npy')
+        dist = np.load(baseFilePath+'/Calibration/CameraParams/'+str(Cam_indx)+'/Calibration_dist.npy')
+
+    images = glob.glob(path)
+    count = 0
+    for fname in images:
+        aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
+        img = cv2.imread(fname)
+        #img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+        # detector parameters can be set here (List of detection parameters[3])
+        parameters = cv2.aruco.DetectorParameters_create()
+        parameters.adaptiveThreshConstant = 10
+
+        corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(img, aruco_dict, parameters=parameters)
+        rvec_d = {}
+        tvec_d = {}
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        if np.all(ids != None):
+
+            # estimate pose of each marker and return the values
+            # rvet and tvec-different from camera coefficients
+            rvec, tvec,_ = cv2.aruco.estimatePoseSingleMarkers(corners,0.1, K,dist)
+            if count == 0:
+                for i in range(len(ids)):
+                    #ret[ids[i]] = {'rvec':list(rvec[i].reshape((-1))),'tvec':list(tvec[i].reshape((-1)))}
+                    rvec_d[int(ids[i])] = rvec[i].reshape((-1)).tolist()
+                    tvec_d[int(ids[i])] = tvec[i].reshape((-1)).tolist()
+
+                # np.save('ARUCO_POSE/CamA_t.npy',tvec)
+                # np.save('ARUCO_POSE/CamA_r.npy',rvec)
+
+            #(rvec-tvec).any() # get rid of that nasty numpy value array error
+
+            for i in range(0, ids.size):
+                # draw axis for the aruco markers
+                cv2.aruco.drawAxis(img, K, dist, rvec[i], tvec[i], 0.1)
+
+            # draw a square around the markers
+            cv2.aruco.drawDetectedMarkers(img, corners)
+
+
+            # code to show ids of the marker found
+            strg = ''
+            for i in range(0, ids.size):
+                strg += str(ids[i][0])+', '
+
+            cv2.putText(img, "Id: " + strg, (0,64), font, 1, (0,255,0),2,cv2.LINE_AA)
+            count += 1
+
+            cv2.imshow('frame',img)
+            key = cv2.waitKey(3000)
+
+            cv2.destroyAllWindows()
+
+
+
+            return K,dist,rvec_d,tvec_d
+    
+        else:
+            # code to show 'No Ids' when no markers are found
+            cv2.putText(img, "No Ids", (0,64), font, 1, (0,255,0),2,cv2.LINE_AA)
+
+
+
+def charuco_detect(path,Cam_index,video_resolution):
+    
+    aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_250)
+    board = aruco.CharucoBoard_create(7, 5, 1, .8, aruco_dict)
+    images = glob.glob(path)
+
+
+    def read_chessboards(images):
+        """
+        Charuco base pose estimation.
+        """
+        print("POSE ESTIMATION STARTS:")
+        allCorners = []
+        allIds = []
+        decimator = 0
+        # SUB PIXEL CORNER DETECTION CRITERION
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
+
+        for im in images:
+            print("=> Processing image {0}".format(im))
+            frame = cv2.imread(im)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(gray, aruco_dict)
+
+            if len(corners)>0:
+                # SUB PIXEL DETECTION
+                for corner in corners:
+                    cv2.cornerSubPix(gray, corner,
+                                    winSize = (3,3),
+                                    zeroZone = (-1,-1),
+                                    criteria = criteria)
+                res2 = cv2.aruco.interpolateCornersCharuco(corners,ids,gray,board)
+                if res2[1] is not None and res2[2] is not None and len(res2[1])>3 and decimator%1==0:
+                    allCorners.append(res2[1])
+                    allIds.append(res2[2])
+
+            decimator+=1
+
+        imsize = gray.shape
+        return allCorners,allIds,imsize
+    
+    def calibrate_camera(allCorners,allIds,imsize):
+        """
+        Calibrates the camera using the dected corners.
+        """
+        print("CAMERA CALIBRATION")
+
+        cameraMatrixInit = np.array([[ 1000.,    0., imsize[0]/2.],
+                                    [    0., 1000., imsize[1]/2.],
+                                    [    0.,    0.,           1.]])
+
+        distCoeffsInit = np.zeros((5,1))
+        flags = (cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_FIX_ASPECT_RATIO)
+        #flags = (cv2.CALIB_RATIONAL_MODEL)
+        (ret, camera_matrix, distortion_coefficients0,
+        rotation_vectors, translation_vectors,
+        stdDeviationsIntrinsics, stdDeviationsExtrinsics,
+        perViewErrors) = cv2.aruco.calibrateCameraCharucoExtended(
+                        charucoCorners=allCorners,
+                        charucoIds=allIds,
+                        board=board,
+                        imageSize=imsize,
+                        cameraMatrix=cameraMatrixInit,
+                        distCoeffs=distCoeffsInit,
+                        flags=flags,
+                        criteria=(cv2.TERM_CRITERIA_EPS & cv2.TERM_CRITERIA_COUNT, 10000, 1e-9))
+
+        return ret, camera_matrix, distortion_coefficients0, rotation_vectors, translation_vectors
+
+    allCorners,allIds,imsize=read_chessboards(images)
+    ret, mtx, dist, rvecs, tvecs = calibrate_camera(allCorners,allIds,imsize)
+    tvecs = np.array(tvecs)
+    mtx = np.array(mtx)
+    rvecs = np.array(rvecs)
+
+
+    return mtx,dist,rvecs,tvecs
 
 
 
