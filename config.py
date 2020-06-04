@@ -21,7 +21,7 @@ session_num = '0001'
 baseProjectPath = 'C:/Users/chris/JugglingProject'
 
 #Enter the Camera Names
-cam_names = ['CamE','CamF']
+cam_names = ['CamE','CamF','CamG','CamH']
 
 #off of base project path
 DLCconfigPath = 'DLCNetworks/Juggling-CC-2020-04-21/config.yaml'
@@ -34,7 +34,7 @@ useCheckerboardVid = False
 calibrateCameras = False
 
 #If the go pro videos get cut into two videos  
-num_of_cameras = 2 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
+num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
 base_Cam_Index = 'CamF'  #Put Camera Name
 
 #What features from video you are tracking
@@ -45,13 +45,12 @@ include_OpenPoseHands = True
 include_OpenPoseFace = False
 
 #What frame of video you want to start reconstruction
-start_frame = 0
+start_frame = 700
 #How many frames you want to reconstruct, for full video input -1
 Len_of_frame = 100
 
 video_resolution = (1080,1920)
 
 
-import_camera_parameters = False
-import_camera_intrinsic = False
+
 

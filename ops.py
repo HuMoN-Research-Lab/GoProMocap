@@ -12,10 +12,11 @@ import matplotlib.pyplot as plt
 import os
 import re
 import cv2.aruco as aruco
-from config import num_of_cameras,useCheckerboardVid, cam_names, import_camera_intrinsic, import_camera_parameters
+from config import num_of_cameras,useCheckerboardVid, cam_names
 from create_project import baseFilePath, checkerVideoFolder, rawVideoFolder
-
-
+from itertools import combinations
+from pykalman import KalmanFilter
+import statistics
 
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -206,6 +207,7 @@ def video_loader(fileName,Cam_Indx):
 
 
 
+
 #=======================triangulate points
 class triangulate:
     """
@@ -224,11 +226,12 @@ class triangulate:
             raise Exceptions('number of views must be equal to number of projection matrix')
         
         N_views = len(self.ProjectMat)
-        A = np.zeros((N_views*2,4)) #prepare svd matrix A
+        N_Combinations = len(list(combinations(range(N_views),2)))
+        Q =[]
+        c = np.zeros((N_views*2,4)) #prepare svd matrix A
         X = np.zeros((self.ImgPoints.shape[0],self.ImgPoints.shape[1],4))
-
         for i in range(self.ImgPoints.shape[0]): #for each point
-            
+            T=[]   
             for k in range(self.ImgPoints.shape[1]):
                 #if the lowest p-value of the obersvations is less than 0.9, skip the calculation
                 if float(min(list(self.ImgPoints[i,k,:,-1]))) < -1:
@@ -238,16 +241,15 @@ class triangulate:
                     u,v = self.ImgPoints[i,k,j,0],self.ImgPoints[i,k,j,1] #initialize x,y points
                     
                     for col in range(4):
-                        A[j*2+0,col] = u*self.ProjectMat[j,2,col] - self.ProjectMat[j,0,col]
-                        A[j*2+1,col] = v*self.ProjectMat[j,2,col] - self.ProjectMat[j,1,col]
-     
-
-                U,s,V = np.linalg.svd(A)
+                        c[j*2+0,col] = u*self.ProjectMat[j,2,col] - self.ProjectMat[j,0,col]
+                        c[j*2+1,col] = v*self.ProjectMat[j,2,col] - self.ProjectMat[j,1,col]
+                U,s,V = np.linalg.svd(c)
                 P = V[-1,:] / V[-1,-1]
                 #X[i] = P[:-1]
                 X[i,k] = P
         
         return X
+
 
 
 #=====================pick best angle version
@@ -386,11 +388,7 @@ class triangulateFlex:
 
 def aruco_detect(path,Cam_indx,video_resolution):
 
-    if not import_camera_intrinsic:
-        _,K,dist,_,_ = get_RT_mtx(path,Cam_indx,video_resolution)
-    else:
-        K = np.load(baseFilePath+'/Calibration/CameraParams/'+str(Cam_indx)+'Calibration_mtx.npy')
-        dist = np.load(baseFilePath+'/Calibration/CameraParams/'+str(Cam_indx)+'/Calibration_dist.npy')
+    
 
     images = glob.glob(path)
     count = 0
