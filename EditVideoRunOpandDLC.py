@@ -252,7 +252,7 @@ def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
     else:
         rotation = 0 
     ###################### OpenPose ######################################
-    os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
+    #os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
     for jj in range(len(cam_names)):
         subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+cam_names[jj]+'.mp4', '--frame_rotate='+str(rotation) ,'--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[jj]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[jj]])
