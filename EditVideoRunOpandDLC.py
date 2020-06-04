@@ -165,7 +165,7 @@ def trimVideos(Inputfilepath,OutputFilepath):
     Outputs the trimmed video to specified filepath
     '''    
     for ii in range(len(cam_names)):
-        vidcap = cv2.VideoCapture(Inputfilepath+'/'+cam_names[ii])#Open video
+        vidcap = cv2.VideoCapture(Inputfilepath+'/'+cam_names[ii]+'.mp4')#Open video
         vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH) #Get video height
         vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) #Get video width
         video_resolution = (int(vidWidth),int(vidHeight)) #Create variable for video resolution
@@ -174,7 +174,8 @@ def trimVideos(Inputfilepath,OutputFilepath):
         success,image = vidcap.read() #read a frame
         maxfirstGray = 0 #Intialize the variable for the threshold of the max brightness of beginning of video
         maxsecondGray = 0 #Intialize the variable for the threshold of the max brightness of end of video
-        
+        print(cam_names[ii],vidLength)
+        '''
         for jj in range(int(vidLength)):#For each frame in the video
             
             success,image = vidcap.read() #read a frame
@@ -191,11 +192,11 @@ def trimVideos(Inputfilepath,OutputFilepath):
                         secondFlashFrame = jj #Get the frame number of the brightest frame
             else:#If the frame is not correctly read
                 continue#Continue
-            input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii])#input for ffmpeg
+        input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii]+'.mp4')#input for ffmpeg
 
-            node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')#Trim video based on the frame numbers
-            node1_1.output(OutputFilepath+'/'+cam_names[ii]).run()#Save to output folder
-
+        node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')#Trim video based on the frame numbers
+        node1_1.output(OutputFilepath+'/'+cam_names[ii]+'.mp4').run()#Save to output folder
+        '''
 def runDeepLabCut(Inputfilepath,OutputFilepath):
     '''Function inputs are filepath to videos to be tracked by DLC and the folder to save the output to
     Videos are copied to output folder, than processed in DLC based on the dlc config path 
@@ -253,10 +254,9 @@ def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
     ###################### OpenPose ######################################
     os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
-    for dir in [Inputfilepath]:# loop through undistorted folder
-        for video in os.listdir(dir):
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+video, '--frame_rotate='+str(rotation) ,'--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[j]])
-            j =+1
+    for jj in range(len(cam_names)):
+        subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+cam_names[jj]+'.mp4', '--frame_rotate='+str(rotation) ,'--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[jj]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[jj]])
+        j =+1
 
 
 def Parse_Openpose(Inputfilepath,OutputFilepath):

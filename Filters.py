@@ -1,14 +1,14 @@
 #from pykalman import KalmanFilter
 import numpy as np
 from scipy import signal
-
+from config import cam_names
 
 
 
 def smoothOpenPose(Inputfilepath):
     '''Function Input is Parsed Openpose data filepath
     The function smooths the Openpose data and then saves it to the same folder with Smooth in front of file name'''
-    for jj in len(cam_names):
+    for jj in range(len(cam_names)):
         data = np.load(Inputfilepath +'/OP_'+cam_names[jj]+'.npy')
         amountOfOpPoints = len(data[0])
         for ii in range(amountOfOpPoints):
