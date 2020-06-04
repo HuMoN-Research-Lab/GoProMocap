@@ -5,9 +5,10 @@ import json
 import numpy as np
 import pandas as pd
 import ffmpeg
+#from pykalman import KalmanFilter
 import cv2
-#import deeplabcut
-from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands
+import deeplabcut
+from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands, portraitMode
 from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
 import glob
 
@@ -164,7 +165,7 @@ def trimVideos(Inputfilepath,OutputFilepath):
     Outputs the trimmed video to specified filepath
     '''    
     for ii in range(len(cam_names)):
-        vidcap = cv2.VideoCapture(Inputfilepath+'/'+cam_names[ii])#Open video
+        vidcap = cv2.VideoCapture(Inputfilepath+'/'+cam_names[ii]+'.mp4')#Open video
         vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH) #Get video height
         vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) #Get video width
         video_resolution = (int(vidWidth),int(vidHeight)) #Create variable for video resolution
@@ -173,7 +174,8 @@ def trimVideos(Inputfilepath,OutputFilepath):
         success,image = vidcap.read() #read a frame
         maxfirstGray = 0 #Intialize the variable for the threshold of the max brightness of beginning of video
         maxsecondGray = 0 #Intialize the variable for the threshold of the max brightness of end of video
-        
+        print(cam_names[ii],vidLength)
+        '''
         for jj in range(int(vidLength)):#For each frame in the video
             
             success,image = vidcap.read() #read a frame
@@ -190,16 +192,17 @@ def trimVideos(Inputfilepath,OutputFilepath):
                         secondFlashFrame = jj #Get the frame number of the brightest frame
             else:#If the frame is not correctly read
                 continue#Continue
-            input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii])#input for ffmpeg
+        input1 = ffmpeg.input(Inputfilepath+'/'+cam_names[ii]+'.mp4')#input for ffmpeg
 
-            node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')#Trim video based on the frame numbers
-            node1_1.output(OutputFilepath+'/'+cam_names[ii]).run()#Save to output folder
-
+        node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')#Trim video based on the frame numbers
+        node1_1.output(OutputFilepath+'/'+cam_names[ii]+'.mp4').run()#Save to output folder
+        '''
 def runDeepLabCut(Inputfilepath,OutputFilepath):
     '''Function inputs are filepath to videos to be tracked by DLC and the folder to save the output to
     Videos are copied to output folder, than processed in DLC based on the dlc config path 
     DLC output is saved in outputfilepath and the output is also converted to npy and saved as well
     '''
+    
     #####################Copy Videos to DLC Folder############
     for dir in [Inputfilepath]:#Iterates through input folder
         for video in os.listdir(dir):#Iterates through each video in folder
@@ -222,33 +225,40 @@ def runDeepLabCut(Inputfilepath,OutputFilepath):
     #If there is not a folder for dlc npy output, create one
     if not os.path.exists(OutputFilepath + 'DLCnpy'):
         os.mkdir(OutputFilepath+ 'DLCnpy')
-
+    
     #Load all dlc csv output files  
-    csvfile = glob.glob(OutputFilepath+'/*csv')
-
+    csvfiles = glob.glob(OutputFilepath+'/*csv')
     #For loop gets csv data from all cameras
-    j = 0
-    for data in csvfile:     
+    j=0
+    for data in csvfiles:     
         datapoints = pd.read_csv(data) # read in the csv data 
-        parsedDlcData = datapoints.iloc[3:,7:10].values#the last element in the array is the P value
+        print(datapoints)            
 
-        print(parsedDlcData.shape)
-        np.save(OutputFilepath+'DLCnpy/dlc_'+cam_names[j]+'.npy',parsedDlcData)#Save data
-        j = j+1
+        parsedDlcData = datapoints.iloc[3:,7:10].values#the last element in the array is the P value
+        #print(parsedDlcData)
+    
+        print(parsedDlcData)
+        np.save(OutputFilepath+'/DLCnpy/dlc_'+cam_names[j]+'.npy',parsedDlcData)#Save data
+        j+=1
+           
 
 def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
     '''Function inputs are the undistorted video filepath, the filepath to save the video output, and the filepath to save the data output
     The function takes the undistorted video and processes the videos in openpose
     The output is openpose overlayed videos and raw openpose data
     '''
+    if portraitMode:
+        rotation = 90
+    else:
+        rotation = 0 
     ###################### OpenPose ######################################
     #os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
-    for dir in [Inputfilepath]:# loop through undistorted folder
-        for video in os.listdir(dir):
-            subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+video, '--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[j]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[j]])
-            j =+1
-   
+    for jj in range(len(cam_names)):
+        subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+cam_names[jj]+'.mp4', '--frame_rotate='+str(rotation) ,'--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[jj]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[jj]])
+        j =+1
+
+
 def Parse_Openpose(Inputfilepath,OutputFilepath):
     '''Function inputs is the filepath to rawopenpose data and the filepath to where to save the parsed openpose data
     Function takes the raw openpose data and organizes in a h5 file, that h5 file is then opened and the data is saved as an npy file
@@ -297,13 +307,15 @@ def Parse_Openpose(Inputfilepath,OutputFilepath):
                     ii = ii +1 
                 k= k +1
             j = j + 1
-    return points_inFrame
+   
 
     #Create a list variable to store all frame numbers where there is no person in frame
     noPersonInFrame =[]
 
     k = 0#Initialize counter
+ 
     
+ 
     with h5py.File(OutputFilepath+ '/OpenPoseh5Output.hdf5', 'r') as f:
         allCameras = f.get('Cameras')
         for camera in range(len(allCameras)):
@@ -311,35 +323,50 @@ def Parse_Openpose(Inputfilepath,OutputFilepath):
             target_skeleton = f.get('Cameras/'+str(cam_names[camera])+'/Frame0/Person0/Skeleton')
             target_skeleton = target_skeleton[()]
             allFrames = f.get('Cameras/'+str(cam_names[camera]))
-                                  
+            framesOfPeople = []
             for frame in range(len(allFrames)):
+                peopleInFrame = 0
                 allPeople = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame))
                 if len(allPeople) == 0:
-                    noPersonInFrame.append(j) 
-                    a = np.empty((points_inFrame,3))
-                    a[:] = np.zeros
+                    noPersonInFrame.append(frame) 
+                    empty = (points_inFrame,3)
+                    a = np.zeros(empty)
                     ret.append(a)
+                    continue
+                
                 else:
-                    c = 10000000
+                    c = 0
                     res = 0
-                    for person in range(len(allPeople)):                                      
+                    for person in range(len(allPeople)):
+                        zeroPoint =[]
+                        peopleInFrame+=1
+                        #========================Load body point data
                         if include_OpenPoseSkeleton:#If you include skeleton
                             skeleton  = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame)+'/Person'+str(person)+'/Skeleton')  
                             skeleton = skeleton[()]
                         if include_OpenPoseHands: #If you include hands
-                            hand_left = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame)+'/Person'+str(person)+'/Left Hand')
-                            hand_left = [()]
-                            hand_right = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame)+'/Person'+str(person)+'/Right Hand')
-                            hand_right = [()]
+                            hand_left = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame)+'/Person'+str(person)+'/LeftHand')
+                            hand_left = hand_left[()]
+                            hand_right = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame)+'/Person'+str(person)+'/RightHand')
+                            hand_right = hand_right[()]
                         if include_OpenPoseFace:#If you include face
                             face = f.get('Cameras/'+str(cam_names[camera])+'/Frame'+str(frame)+'/Person'+str(person)+'/Face')
-                            face = [()]
-                        
-                        distance = sum(sum(abs(target_skeleton-skeleton))) #Calculate the distance of the person in this frame compared to the target person from last frame
+                            face = face[()]
+                    
+                        #============================Find correct skeleton
+                        #distance = sum(sum(abs(target_skeleton-skeleton))) #Calculate the distance of the person in this frame compared to the target person from last frame
+                        pval = skeleton[:,2]
+                        avgPval = sum(pval)/len(pval)
+                        #for jj in range(len(skeleton)):
+                        #    if skeleton[jj,0] > .001:
+                        #        zeroPoint.append(jj)
 
-                        if distance < c: #If the distance is less than the threshold than this person is the target skeleton
-                            c = distance #the distance becomes threshold
-                            
+
+                        #if distance < c: #If the distance is less than the threshold than this person is the target skeleton
+                        if avgPval > c:
+                            c = avgPval
+                            #c = distance #the distance becomes threshold
+                            #c = len(zeroPoint)
                             if include_OpenPoseHands:
                                 if include_OpenPoseFace:
                                     HL = hand_left
@@ -359,15 +386,16 @@ def Parse_Openpose(Inputfilepath,OutputFilepath):
                                     fullPoints = np.concatenate((res,newFace),axis = 0)
                                 else:
                                     res = skeleton        
-                                    fullPoints = skeleton
-                                
-                            target_skeleton = res        
-                    ret.append(fullPoints)
-
+                                    fullPoints =  res
+                        
+                framesOfPeople.append(peopleInFrame)
+                ret.append(fullPoints)
             ret = np.array(ret)
             print(ret.shape)
             np.save(OutputFilepath+'/OP_'+cam_names[k]+'.npy',ret)
+            #np.savetxt(OutputFilepath+'/OP_'+cam_names[k]+'.txt',ret[:,8,0])
             k  = k+1
+
     return noPersonInFrame
 
 
@@ -380,3 +408,5 @@ def checkerBoardUndistort(Inputfilepath,OutputFilepath):
     for dir in checkerDatadir:
         for video in os.listdir(dir):
             subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+video, '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", OutputFilepath+'/'+video])
+
+

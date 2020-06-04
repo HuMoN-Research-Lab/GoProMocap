@@ -10,9 +10,10 @@ from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
 from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
-
+import subprocess
+from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
+from Filters import smoothOpenPose, kalmansmoothReconstruction
 
 #=========================Create Folders for project
 
@@ -32,13 +33,13 @@ trimVideos(undistortedFilepath,trimFilepath)
 
 #==========================Run deeplabcut and parse through output
 runDeepLabCut(trimFilepath,DLCfilepath)
-#==========================Run OpenPose and parse through output
-'''
-#if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenPoseSkeleton == True:
-#    runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
 
-    #points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
-points_inFrame =67
+#==========================Run OpenPose and parse through output
+if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenPoseSkeleton == True:
+    runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
+    points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
+    smoothOpenPose(openposeOutputFilepath)
+
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -479,9 +480,9 @@ print('save sussesful')
 #     coords,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
 #     ball_points = coords[:,:,:-1].reshape((-1,1,3))
 
-#     C = np.concatenate((C,ball_points),axis=-2)
-
-  
+np.save(baseFilePath+'/Processed/DataPoints3D.npy',C)
+print('save sussesful')
+kalmansmoothReconstruction(baseFilePath+'/Processed/DataPoints3D.npy')
 
 if num_of_cameras == 3:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],coords).display()
