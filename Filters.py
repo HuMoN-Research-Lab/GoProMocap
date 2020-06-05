@@ -1,8 +1,8 @@
-#from pykalman import KalmanFilter
+from pykalman import KalmanFilter
 import numpy as np
 from scipy import signal
 from config import cam_names
-
+from matplotlib import pyplot as plt
 
 
 def smoothOpenPose(Inputfilepath):
@@ -20,29 +20,33 @@ def smoothOpenPose(Inputfilepath):
             data[:,ii,kk] = filt
         np.save(Inputfilepath +'/SmoothedOP_'+cam_names[jj]+'.npy', data)
 
-def kalmansmoothReconstruction(Inputfilepath):
-    ''' Function Input is the filepath for the reconstructed output
+def kalman(Inputfilepath):
+    ''' Function Input is the filepath for the openpose output
     The function smooths the output using the kalman filter'''
-    x = range(n_timesteps)
-    data= np.load(Inputfilepath)
-    
-    # create a Kalman Filter by hinting at the size of the state and observation
-    # space.  If you already have good guesses for the initial parameters, put them
-    # in here.  The Kalman Filter will try to learn the values of all variables.
+    #Intialize a Kalman Filter with a standard transistion matrix znd covariance
     kf = KalmanFilter(transition_matrices=np.array([[0, 1], [0, 1]]),
-                    transition_covariance=0.1 * np.eye(2))
+                            transition_covariance=0.1 * np.eye(2))
+    colors = ['b','g','k','m']#List for colors of plot
+    colors2 = ['c','y','.5','r']#List for corresponding colors of plot
+    markers =['*','o']#List of marker types
+    for ii in range(len(cam_names)):#iterates through the amount of cameras
+        data= np.load(Inputfilepath+'/SmoothedOP_'+cam_names[ii]+'.npy')#load in the npy file of each camera
+        plt.plot(data[:,0,2],marker=markers[0],color = colors[ii])#plot the original data before filter
+        for jj in range(data.shape[1]):#Iterate through every point 
+            for kk in range(3):#Iterates through XYZ coords
+                kalFilt, _ = kf.smooth(data[:,jj,kk])#Kal filter for every frame of for each point
+                data[:,jj,kk] = kalFilt[:,0]#replace the data in the data array with the new filtered data
+
+            print('Loop #',jj)
+        plt.plot(data[:,0,2],marker=markers[1],color = colors2[ii])#Plot Filtered Data
+        np.save(Inputfilepath +'/KalmanOP_'+cam_names[ii]+'.npy', data)#Save out the new 
+
+    plt.xlabel('Frame #')#Plot xlabel
+    plt.ylabel('Pixel Coordinates')#Plot ylabel
+    plt.title('Z-Coord of Randomly Selected OpenPose point before and after Kalman Filter')#Plot title
+    plt.legend(('CamE Unfiltered','CamE Filtered','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
+                loc = 'upper right')#plot legend
+    plt.show()#Show the plot
     
-   
-    states_pred = kf.em(onePointX).filter(onePointX)
-    likelihood = kf.loglikelihood(onePointX)
-    amountOfPoints = len(data[0])
-    likelihood= data
-    for ii in range(amountOfPoints):
-        for kk in range(3):
-            kalFilt = kf.em(data[:,ii,kk]).smooth(data[:,ii,kk])
-            data[:,ii,kk] = kalFilt
-            pointLikelihood = kf.loglikelihood(data[:,ii,kk])
-            likelihood[:,ii,kk] = pointLikelihood
-    np.save(Inputfilepath +'/Filtered3DPoints.npy', data)
-      
+                
     

@@ -13,7 +13,7 @@ from scipy.sparse import lil_matrix
 from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 import subprocess
 from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
-from Filters import smoothOpenPose, kalmansmoothReconstruction
+from Filters import smoothOpenPose, kalman
 
 #=========================Create Folders for project
 
@@ -39,7 +39,8 @@ if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenP
     runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
     points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
     smoothOpenPose(openposeOutputFilepath)
-
+'''
+kalman(openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -66,31 +67,31 @@ rootOPFolder = openposeOutputFilepath+'/'
 rootDLCFolder = DLCfilepath +'/DLCnpy'
 
 if num_of_cameras ==2:
-    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],
-                             [rootOPFolder+'OP_'+cam2+'.npy',cam2]]
+    Pixel_coord_FIlE_List = [[rootOPFolder+'KalmanOP_'+cam1+'.npy',cam1],
+                             [rootOPFolder+'KalmanOP_'+cam2+'.npy',cam2]]
 
-    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'OP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
-                                          [rootOPFolder+'OP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam2+'.npy',cam2]]
+    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'KalmanOP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
+                                          [rootOPFolder+'KalmanOP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam2+'.npy',cam2]]
 if num_of_cameras ==3:
-    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],
-                             [rootOPFolder+'OP_'+cam2+'.npy',cam2],
-                             [rootOPFolder+'OP_'+cam3+'.npy',cam3]]
+    Pixel_coord_FIlE_List = [[rootOPFolder+'KalmanOP_'+cam1+'.npy',cam1],
+                             [rootOPFolder+'KalmanOP_'+cam2+'.npy',cam2],
+                             [rootOPFolder+'KalmanOP_'+cam3+'.npy',cam3]]
                                                          
 
-    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'OP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
-                                          [rootOPFolder+'OP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam2],
-                                          [rootOPFolder+'OP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3]]
+    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'KalmanOP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
+                                          [rootOPFolder+'KalmanOP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam2],
+                                          [rootOPFolder+'KalmanOP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3]]
 if num_of_cameras ==4:
-    Pixel_coord_FIlE_List = [[rootOPFolder+'OP_'+cam1+'.npy',cam1],
-                             [rootOPFolder+'OP_'+cam2+'.npy',cam2],
-                             [rootOPFolder+'OP_'+cam3+'.npy',cam3],
-                             [rootOPFolder+'OP_'+cam4+'.npy',cam4]]
+    Pixel_coord_FIlE_List = [[rootOPFolder+'KalmanOP_'+cam1+'.npy',cam1],
+                             [rootOPFolder+'KalmanOP_'+cam2+'.npy',cam2],
+                             [rootOPFolder+'KalmanOP_'+cam3+'.npy',cam3],
+                             [rootOPFolder+'KalmanOP_'+cam4+'.npy',cam4]]
                                                          
 
-    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'OP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
-                                          [rootOPFolder+'OP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam2+'.npy',cam2],
-                                          [rootOPFolder+'OP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3],
-                                          [rootOPFolder+'OP_'+cam4+'.npy',rootDLCFolder+'dlc_'+cam4+'.npy',cam4]]
+    Pixel_coord_FIlE_List_include_DLC = [[rootOPFolder+'KalmanOP_'+cam1+'.npy',rootDLCFolder+'dlc_'+cam1+'.npy',cam1],
+                                          [rootOPFolder+'KalmanOP_'+cam2+'.npy',rootDLCFolder+'dlc_'+cam2+'.npy',cam2],
+                                          [rootOPFolder+'KalmanOP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3],
+                                          [rootOPFolder+'KalmanOP_'+cam4+'.npy',rootDLCFolder+'dlc_'+cam4+'.npy',cam4]]
 
 if Len_of_frame == -1:
     frameLengthAllCam = [] #create variable to stoe frame length
