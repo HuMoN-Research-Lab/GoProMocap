@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import tkinter
 import os
 import cv2
 import pickle
+import csv
 from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateFlex,triangulateTest,aruco_detect,charuco_detect
-from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton, calibrateCameras, video_resolution
+#from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton, calibrateCameras, video_resolution
 #from visulize_with_out_head import Vis
 from visualize import Vis
 from scipy.optimize import least_squares
@@ -12,13 +14,49 @@ import time
 from scipy.sparse import lil_matrix
 from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 import subprocess
-from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
-from Filters import smoothOpenPose, kalman
-
+#from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
+from create_project import create_project
+from Filters import smoothOpenPose, kalman, butterFilt
+from GUI import firstGUI, secondGUI
 #=========================Create Folders for project
 
-create_project()
-'''
+
+configVariables = create_project()
+subject = configVariables[0]
+cam_names = configVariables[1]
+base_Cam_Index = configVariables[2]
+Len_of_frame = configVariables[3]
+start_frame = configVariables[4]
+include_DLC = configVariables[5]
+include_OpenPoseFace = configVariables[6]
+include_OpenPoseHands = configVariables[7]
+include_OpenPoseSkeleton = configVariables[8]
+baseFilePath = configVariables[13]
+baseProjectPath = configVariables[12] 
+calibrateCameras = configVariables[10]
+useCheckerboardVid = configVariables[9]
+
+num_of_cameras = len(cam_names)
+
+
+rawData = baseFilePath+'/Raw'
+checkerVideoFolder = rawData+'/Checkerboard'
+rawVideoFolder = rawData+'/RawGoProData'
+calibrationFilePath = baseProjectPath +'/'+subject+'/Calibration'
+cameraParamsFilePath = calibrationFilePath +'/CameraParams'
+calibVideoFilepath = calibrationFilePath +'/CalibrationVideos'
+interfilepath = baseFilePath + '/Intermediate'
+videoOutputFilepath = interfilepath+'/VideoOutput'
+openposeRawFilepath = interfilepath + '/OpenPoseRaw'
+DLCfilepath = interfilepath + '/DeepLabCut'
+undistortedFilepath = interfilepath + '/Undistorted'
+combinedFilepath = interfilepath+'/CombinedVideo'
+processedFilePath = baseFilePath +'/Processed'
+trimFilepath = interfilepath +'/Trimmed'
+openposeOutputFilepath = interfilepath + '/OpenPoseOutput'
+
+
+
 if calibrateCameras:
     getCameraParams(calibrationFilePath)
 #===========================Concat,Undistort and Trim Videos 
@@ -39,8 +77,9 @@ if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenP
     runOpenPose(undistortedFilepath,videoOutputFilepath,openposeRawFilepath)
     points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
     smoothOpenPose(openposeOutputFilepath)
-'''
-kalman(openposeOutputFilepath)
+
+points_inFrame =67
+butterFilt(openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -113,7 +152,7 @@ if num_of_cameras == 4:
     base_cam = {cam_names[0]:0,cam_names[1]:1,cam_names[2]:2,cam_names[3]:3}
 #==================load image from videos 
 for path in Source_video_List:
-    video_loader(path[0],path[1])
+    video_resolution = video_loader(path[0],path[1])
 
 
 #==================load pixel data to a dictionary
@@ -481,9 +520,9 @@ print('save sussesful')
 #     coords,VIS_cam_List = triangulateTest(Proj_points,Proj_Mat,base_cam[base_Cam_Index]).solveA()
 #     ball_points = coords[:,:,:-1].reshape((-1,1,3))
 
-np.save(baseFilePath+'/Processed/DataPoints3D.npy',C)
+np.save(baseFilePath+'/Processed/DataPoints3D.npy',coords)
 print('save sussesful')
-kalmansmoothReconstruction(baseFilePath+'/Processed/DataPoints3D.npy')
+
 
 if num_of_cameras == 3:
     Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],coords).display()

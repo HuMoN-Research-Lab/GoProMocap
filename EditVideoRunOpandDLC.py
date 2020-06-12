@@ -7,11 +7,23 @@ import pandas as pd
 import ffmpeg
 #from pykalman import KalmanFilter
 import cv2
-import deeplabcut
-from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands, portraitMode
-from create_project import baseFilePath, rawData, checkerVideoFolder, rawVideoFolder
+#import deeplabcut
+#from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands, portraitMode
+from create_project import GetVariables
 import glob
 
+
+configVariables = GetVariables()
+baseFilePath = configVariables[13]
+cam_names = configVariables[1]
+baseProjectPath = configVariables[12] 
+DLCconfigPath = configVariables[11]
+include_OpenPoseFace = configVariables[6]
+include_OpenPoseHands = configVariables[7]
+include_OpenPoseSkeleton = configVariables[8]
+portraitMode = configVariables[14]
+
+rawVideoFolder = baseFilePath+'/Raw'
 def getCameraParams(filepath):
     '''Functions input is the filepath to the calibration folder. 
     The function utilizes opencv functions to find camera parameters based on calibration videos

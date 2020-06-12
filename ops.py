@@ -12,16 +12,25 @@ import matplotlib.pyplot as plt
 import os
 import re
 import cv2.aruco as aruco
-from config import num_of_cameras,useCheckerboardVid, cam_names
-from create_project import baseFilePath, checkerVideoFolder, rawVideoFolder
+#from config import num_of_cameras,useCheckerboardVid, cam_names
+from create_project import GetVariables
 from itertools import combinations
 from pykalman import KalmanFilter
 import statistics
 
+configVariables = GetVariables()
+
+cam_names = configVariables[1]
+useCheckerboardVid = configVariables[9]
+baseProjectPath = configVariables[12]
+
+
+
+num_of_cameras = len(cam_names)
 if useCheckerboardVid == True:
-    SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
+    SourceVideoFolder = baseProjectPath + '/Intermediate/CheckerboardUndistorted'
 else: 
-    SourceVideoFolder = baseFilePath + '/Intermediate/Trimmed'
+    SourceVideoFolder = baseProjectPath + '/Intermediate/Trimmed'
 
 class Exceptions(Exception):
     pass
@@ -141,13 +150,13 @@ def get_RT_mtx(path,Cam_indx,video_resolution):
 
     #=================store camera information
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-    if not os.path.exists(baseFilePath + '/Calibration/CameraINFO'):
-        os.mkdir(baseFilePath + '/Calibration/CameraINFO')
-    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_ret.npy',ret)
-    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_mtx.npy',mtx)
-    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_dist.npy',dist)
-    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_rvec.npy',rvecs)
-    np.save(baseFilePath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_tvecs.npy',tvecs)
+    if not os.path.exists(baseProjectPath + '/Calibration/CameraINFO'):
+        os.mkdir(baseProjectPath + '/Calibration/CameraINFO')
+    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_ret.npy',ret)
+    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_mtx.npy',mtx)
+    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_dist.npy',dist)
+    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_rvec.npy',rvecs)
+    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_tvecs.npy',tvecs)
 
     return ret,mtx,dist,rvecs,tvecs
 
@@ -159,9 +168,9 @@ def video_loader(fileName,Cam_Indx):
     Cam_Index: CamA/CamB/CamC, depand on how many cameras are used during recording
     """
 
-    if not os.path.exists(baseFilePath + '/Calibration'):
-        os.mkdir(baseFilePath + '/Calibration')
-    calibratefilepath = baseFilePath + '/Calibration'
+    if not os.path.exists(baseProjectPath + '/Calibration'):
+        os.mkdir(baseProjectPath + '/Calibration')
+    calibratefilepath = baseProjectPath + '/Calibration'
 
     DATADIR_1 = SourceVideoFolder
     datadir =[DATADIR_1]
@@ -190,9 +199,9 @@ def video_loader(fileName,Cam_Indx):
                         #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                         #single_video.append(image)
                         if count < 20:   
-                            if not os.path.exists(baseFilePath + '/Calibration/'+Cam_Indx+'_Calibration'):
-                                os.mkdir(baseFilePath + '/Calibration/'+Cam_Indx+'_Calibration')                       
-                            cv2.imwrite(baseFilePath+'/Calibration/'+Cam_Indx+'_Calibration/frame%d.jpg' %count , image)     # save frame as JPEG file
+                            if not os.path.exists(baseProjectPath + '/Calibration/'+Cam_Indx+'_Calibration'):
+                                os.mkdir(baseProjectPath + '/Calibration/'+Cam_Indx+'_Calibration')                       
+                            cv2.imwrite(baseProjectPath+'/Calibration/'+Cam_Indx+'_Calibration/frame%d.jpg' %count , image)     # save frame as JPEG file
                             #print(resize.shape)
                         else:
                             break

@@ -1,9 +1,11 @@
 from pykalman import KalmanFilter
 import numpy as np
 from scipy import signal
-from config import cam_names
+from create_project import GetVariables
 from matplotlib import pyplot as plt
-
+from ops import cam_names
+configVariables = GetVariables()
+cam_names = configVariables[1]
 
 def smoothOpenPose(Inputfilepath):
     '''Function Input is Parsed Openpose data filepath
@@ -41,12 +43,41 @@ def kalman(Inputfilepath):
         plt.plot(data[:,0,2],marker=markers[1],color = colors2[ii])#Plot Filtered Data
         np.save(Inputfilepath +'/KalmanOP_'+cam_names[ii]+'.npy', data)#Save out the new 
 
+    
+def butterFilt(Inputfilepath):
+    '''Function Input is Parsed Openpose data filepath
+    The function smooths the Openpose data and then saves it to the same folder with Smooth in front of file name'''
+    
+    colors = ['b','g','k','m']#List for colors of plot
+    colors2 = ['c','y','.5','r']#List for corresponding colors of plot
+    markers =['*','o']#List of marker types
+    fc = 30 
+    fs = 1000
+    w = fc/ (fs/2)
+    #for jj in range(len(cam_names)):
+    data = np.load(Inputfilepath +'/OP_CamE.npy')
+    data2 = np.load(Inputfilepath+'/RAWOP_CamE.npy')
+    filtData = data
+    plt.plot(data[:,0,1],marker=markers[0],color = colors[0])#plot the original data before filter
+    plt.plot(data2[:,0,1],marker=markers[1],color = colors[1])#plot the original data before filter
+
+    amountOfOpPoints = len(data[0])
+    '''
+    for ii in range(amountOfOpPoints):
+        for kk in range(3):
+            if kk == 0 or kk ==1:
+                b, a  = signal.butter(4,w,'low')
+                filtData[:,ii,kk] = signal.filtfilt(b,a, data[:,ii,kk])
+            if kk ==2:
+                filtData[:,ii,kk] = data[:,ii,kk]
+        
+    #lt.plot(filtData[:,0,1],marker=markers[1],color = colors2[0])#Plot Filtered Data
+    np.save(Inputfilepath +'/OP_CamE.npy', data)                 
+    '''
     plt.xlabel('Frame #')#Plot xlabel
     plt.ylabel('Pixel Coordinates')#Plot ylabel
-    plt.title('Z-Coord of Randomly Selected OpenPose point before and after Kalman Filter')#Plot title
-    plt.legend(('CamE Unfiltered','CamE Filtered','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
+    plt.title('Y-Coord of Randomly Selected OpenPose point ')#Plot title
+    plt.legend(('CamE Higher Quality Open Pose Process','CamE Lower Quality Open Pose Process','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
                 loc = 'upper right')#plot legend
     plt.show()#Show the plot
-    
-                
-    
+    print('')
