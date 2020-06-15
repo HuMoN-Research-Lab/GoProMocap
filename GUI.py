@@ -63,13 +63,14 @@ class firstGUI():
         
         ##Using tkinter to create an Checkbutton for chessboard videos 
         var1 = tkinter.IntVar()
+        var1.set(self.data[6])
         useCheckerBoardVid = tkinter.Checkbutton(self.root, text='Do you need to use chessboard videos?', var=var1) 
         self.useCheckerBoardVideEntry = tkinter.Entry(self.root)
         useCheckerBoardVid.grid(row = 1, column = 3)
         self.useCheckerBoardVideEntry.focus_set()
-        
         ##Using tkinter to create an Checkbutton for calibrating Cameras
         var2 = tkinter.IntVar()
+        var2.set(self.data[7])
         calibrateCameras = tkinter.Checkbutton(self.root, text='Do you need to calibrate cameras?', var=var2) 
         self.calibrateCamerasEntry = tkinter.Entry(self.root)
         calibrateCameras.grid(row = 2, column = 3)
@@ -77,6 +78,7 @@ class firstGUI():
         
         ##Using tkinter to create an Checkbutton for portrait mode
         var3 = tkinter.IntVar()
+        var3.set(self.data[8])
         portraitMode = tkinter.Checkbutton(self.root, text='Did you record the videos in portrait mode', var=var3) 
         self.portraitModeEntry = tkinter.Entry(self.root)
         portraitMode.grid(row = 3, column = 3)
@@ -125,6 +127,7 @@ class secondGUI():
         self.camera1Entry.focus_set()       
         self.camera1Entry.insert(0,self.data[0])
         
+        
         #Using tkinter to create an Entry box foor camera twos name
         camera2 =tkinter.Label(self.root2,text="Enter camera two name: ")
         self.camera2Entry=tkinter.Entry(self.root2)
@@ -172,9 +175,10 @@ class secondGUI():
         self.lenFrameEntry.grid(row = 2, column =3)
         self.lenFrameEntry.focus_set()
         self.lenFrameEntry.insert(0,self.data[6])
-
+        
         ##Using tkinter to create a checkbutton for including deeplabcut
         var1 = tkinter.IntVar()
+        var1.set(self.data[7])
         include_DLC = tkinter.Checkbutton(self.root2, text='Do you want include DeepLabCut?', var=var1) 
         self.includeDLCEntry = tkinter.Entry(self.root2)
         include_DLC.grid(row = 0, column = 5)
@@ -182,6 +186,7 @@ class secondGUI():
 
         ##Using tkinter to create a checkbutton for including Openpose Face
         var2 = tkinter.IntVar()
+        var2.set(self.data[8])
         include_OpenPoseFace = tkinter.Checkbutton(self.root2, text='Do you want include OpenPose Face Points?', var=var2) 
         self.include_OpenPoseFaceEntry = tkinter.Entry(self.root2)
         include_OpenPoseFace.grid(row = 1, column = 5)
@@ -189,6 +194,7 @@ class secondGUI():
 
         ##Using tkinter to create a checkbutton for including openpose hand points
         var3 = tkinter.IntVar()
+        var3.set(self.data[9])
         include_OpenPoseHands = tkinter.Checkbutton(self.root2, text='Do you want include OpenPose Hand Points?', var=var3) 
         self.include_OpenPoseHandsEntry = tkinter.Entry(self.root2)
         include_OpenPoseHands.grid(row = 2, column = 5)
@@ -196,6 +202,7 @@ class secondGUI():
 
         ##Using tkinter to create a checkbutton for including openpose skeleton
         var4 = tkinter.IntVar()
+        var4.set(self.data[10])
         include_OpenPoseSkeleton = tkinter.Checkbutton(self.root2, text='Do you want include OpenPose Body Points?', var=var4) 
         self.include_OpenPoseSkeletonEntry = tkinter.Entry(self.root2)
         include_OpenPoseSkeleton.grid(row = 3, column = 5)

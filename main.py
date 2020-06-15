@@ -5,23 +5,21 @@ import os
 import cv2
 import pickle
 import csv
-from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateFlex,triangulateTest,aruco_detect,charuco_detect
-#from config import cam_names, base_Cam_Index,num_of_cameras,Len_of_frame,start_frame,include_DLC, useCheckerboardVid,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton, calibrateCameras, video_resolution
 #from visulize_with_out_head import Vis
 from visualize import Vis
 from scipy.optimize import least_squares
 import time
 from scipy.sparse import lil_matrix
-from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
 import subprocess
-#from create_project import openposeOutputFilepath,interfilepath, checkerVideoFolder, rawVideoFolder, rawData, baseFilePath, trimFilepath, create_project,processedFilePath,combinedFilepath,undistortedFilepath,DLCfilepath,openposeRawFilepath,videoOutputFilepath,interfilepath,calibrationFilePath,cameraParamsFilePath
 from create_project import create_project
-from Filters import smoothOpenPose, kalman, butterFilt
 from GUI import firstGUI, secondGUI
+
 #=========================Create Folders for project
-
-
 configVariables = create_project()
+from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
+from Filters import smoothOpenPose, kalman, butterFilt
+from ops import toCsv,vec2skewMat,inverseH,R_t2H,get_RT_mtx,video_loader,get_TransMat,triangulate,triangulateFlex,triangulateTest,aruco_detect,charuco_detect
+
 subject = configVariables[0]
 cam_names = configVariables[1]
 base_Cam_Index = configVariables[2]
@@ -79,7 +77,7 @@ if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenP
     smoothOpenPose(openposeOutputFilepath)
 
 points_inFrame =67
-butterFilt(openposeOutputFilepath)
+#butterFilt(openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'

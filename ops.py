@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import os
 import re
 import cv2.aruco as aruco
-#from config import num_of_cameras,useCheckerboardVid, cam_names
 from create_project import GetVariables
 from itertools import combinations
 from pykalman import KalmanFilter
@@ -22,7 +21,7 @@ configVariables = GetVariables()
 
 cam_names = configVariables[1]
 useCheckerboardVid = configVariables[9]
-baseProjectPath = configVariables[12]
+baseProjectPath = configVariables[13]
 
 
 
@@ -167,6 +166,7 @@ def video_loader(fileName,Cam_Indx):
     """
     Cam_Index: CamA/CamB/CamC, depand on how many cameras are used during recording
     """
+    
 
     if not os.path.exists(baseProjectPath + '/Calibration'):
         os.mkdir(baseProjectPath + '/Calibration')

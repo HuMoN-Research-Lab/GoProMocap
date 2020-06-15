@@ -5,10 +5,8 @@ import json
 import numpy as np
 import pandas as pd
 import ffmpeg
-#from pykalman import KalmanFilter
 import cv2
-#import deeplabcut
-#from config import DLCconfigPath,  cam_names,  num_of_cameras,baseProjectPath, include_OpenPoseFace, include_OpenPoseSkeleton, include_OpenPoseHands, portraitMode
+import deeplabcut
 from create_project import GetVariables
 import glob
 
@@ -23,7 +21,7 @@ include_OpenPoseHands = configVariables[7]
 include_OpenPoseSkeleton = configVariables[8]
 portraitMode = configVariables[14]
 
-rawVideoFolder = baseFilePath+'/Raw'
+rawVideoFolder = baseFilePath+'/Raw/RawGoProData'
 def getCameraParams(filepath):
     '''Functions input is the filepath to the calibration folder. 
     The function utilizes opencv functions to find camera parameters based on calibration videos
@@ -186,8 +184,7 @@ def trimVideos(Inputfilepath,OutputFilepath):
         success,image = vidcap.read() #read a frame
         maxfirstGray = 0 #Intialize the variable for the threshold of the max brightness of beginning of video
         maxsecondGray = 0 #Intialize the variable for the threshold of the max brightness of end of video
-        print(cam_names[ii],vidLength)
-        '''
+        
         for jj in range(int(vidLength)):#For each frame in the video
             
             success,image = vidcap.read() #read a frame
@@ -208,7 +205,7 @@ def trimVideos(Inputfilepath,OutputFilepath):
 
         node1_1 = input1.trim(start_frame=firstFlashFrame,end_frame=secondFlashFrame).setpts('PTS-STARTPTS')#Trim video based on the frame numbers
         node1_1.output(OutputFilepath+'/'+cam_names[ii]+'.mp4').run()#Save to output folder
-        '''
+        
 def runDeepLabCut(Inputfilepath,OutputFilepath):
     '''Function inputs are filepath to videos to be tracked by DLC and the folder to save the output to
     Videos are copied to output folder, than processed in DLC based on the dlc config path 

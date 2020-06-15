@@ -18,6 +18,7 @@ def create_project():
     
     #Put them into variable names
     config = config[0]
+    
     subject = config[0]
     date = config[1]
     project = config[2]
@@ -25,19 +26,20 @@ def create_project():
     baseProjectPath = config[4]
     DLCfilepath = config[5]
     #Bool values are assigned T/F through if statements since they are saved as 0 or 1
-    if config[6] == 0:
+    if config[6] == '0':
         useCheckerBoardVid = False
     else:
         useCheckerBoardVid = True
-    if config[7] == 0:
+    
+    if config[7] == '0':
         calibrateCameras = False
     else:
         calibrateCameras = True
-    if config[8] == 0:
+    if config[8] == '0':
         portraitMode = False
     else:
         portraitMode = True
-   
+    
     root2 = tkinter.Tk()#Open tkinter
     secondGUI(root2).runReconstruction()#Run the second GUI
     root2.mainloop()#Run GUI
@@ -51,19 +53,19 @@ def create_project():
     startframe  = config2[5]
     lenFrame= config2[6]
     #Bool values are assigned T/F through if statements since they are saved as 0 or 1    
-    if config2[7] ==0:
+    if config2[7] =='0':
         include_DLC = False 
     else:
         include_DLC = True
-    if config2[8] ==0:
+    if config2[8] =='0':
         include_OpenPoseFace = False 
     else:
         include_OpenPoseFace = True
-    if config2[9] ==0:
+    if config2[9] =='0':
         include_OpenPoseHands = False 
     else:
         include_OpenPoseHands = True
-    if config2[10] ==0:
+    if config2[10] =='0':
         include_OpenPoseSkeleton = False 
     else:
         include_OpenPoseSkeleton = True
@@ -156,15 +158,15 @@ def GetVariables():
     baseProjectPath = config[4]
     DLCfilepath = config[5]
     #Bool values are assigned T/F through if statements since they are saved as 0 or 1    
-    if config[6] == 0:
+    if config[6] == '0':
         useCheckerBoardVid = False
     else:
         useCheckerBoardVid = True
-    if config[7] == 0:
+    if config[7] == '0':
         calibrateCameras = False
     else:
         calibrateCameras = True
-    if config[8] == 0:
+    if config[8] == '0':
         portraitMode = False
     else:
         portraitMode = True
@@ -179,22 +181,23 @@ def GetVariables():
     startframe  = config2[5]
     lenFrame= config2[6]
     #Bool values are assigned T/F through if statements since they are saved as 0 or 1    
-    if config2[7] ==0:
+    if config2[7] =='0':
         include_DLC = False 
     else:
         include_DLC = True
-    if config2[8] ==0:
+    if config2[8] =='0':
         include_OpenPoseFace = False 
     else:
         include_OpenPoseFace = True
-    if config2[9] ==0:
+    if config2[9] =='0':
         include_OpenPoseHands = False 
     else:
         include_OpenPoseHands = True
-    if config2[10] ==0:
+    if config2[10] =='0':
         include_OpenPoseSkeleton = False 
     else:
         include_OpenPoseSkeleton = True
+    
     sessionID =  project+session_num+'_'+date
     baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID         
     #Place Variables intp a list
