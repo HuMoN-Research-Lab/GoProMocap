@@ -51,33 +51,39 @@ def butterFilt(Inputfilepath):
     colors = ['b','g','k','m']#List for colors of plot
     colors2 = ['c','y','.5','r']#List for corresponding colors of plot
     markers =['*','o']#List of marker types
-    fc = 30 
-    fs = 1000
-    w = fc/ (fs/2)
+    cutoff = 10 
+    frameRate = 120
+    w = cutoff/ (frameRate/2)
     #for jj in range(len(cam_names)):
-    data = np.load(Inputfilepath +'/OP_CamE.npy')
-    data2 = np.load(Inputfilepath+'/RAWOP_CamE.npy')
-    filtData = data
-    plt.plot(data[:,0,1],marker=markers[0],color = colors[0])#plot the original data before filter
-    plt.plot(data2[:,0,1],marker=markers[1],color = colors[1])#plot the original data before filter
+    for jj in range(len(cam_names)):
+        data = np.load(Inputfilepath +'/OP_'+cam_names[jj]+'.npy')
+        filtData = data
+        filtfiltData = data
+        #diffdata = np.diff(data, n=2,axis =0)
+        plt.plot(data[:,0,1],marker=markers[1],color = colors[jj])#plot the original data before filter
 
-    amountOfOpPoints = len(data[0])
-    '''
-    for ii in range(amountOfOpPoints):
-        for kk in range(3):
-            if kk == 0 or kk ==1:
-                b, a  = signal.butter(4,w,'low')
-                filtData[:,ii,kk] = signal.filtfilt(b,a, data[:,ii,kk])
-            if kk ==2:
-                filtData[:,ii,kk] = data[:,ii,kk]
+        amountOfOpPoints = len(data[0])
         
-    #lt.plot(filtData[:,0,1],marker=markers[1],color = colors2[0])#Plot Filtered Data
-    np.save(Inputfilepath +'/OP_CamE.npy', data)                 
-    '''
+        for ii in range(amountOfOpPoints):
+            for kk in range(3):
+                if kk == 0 or kk ==1:
+                    b, a  = signal.butter(4,w,'low')
+                    filtfiltData[:,ii,kk] = signal.filtfilt(b,a, data[:,ii,kk])
+                if kk ==2:
+                    filtfiltData[:,ii,kk] = data[:,ii,kk]
+        
+        
+        #filtData = (np.diff(filtData, n=1, axis = 0))  
+        plt.plot(filtfiltData[:,0,1],marker=markers[0],color = colors2[jj])#Plot Filtered Data 
+       
+        np.save(Inputfilepath +'/FiltOP_'+cam_names[jj]+'.npy', data)                 
+        
     plt.xlabel('Frame #')#Plot xlabel
     plt.ylabel('Pixel Coordinates')#Plot ylabel
-    plt.title('Y-Coord of Randomly Selected OpenPose point ')#Plot title
-    plt.legend(('CamE Higher Quality Open Pose Process','CamE Lower Quality Open Pose Process','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
+    plt.title('Y-Coord of OpenPose Neck')#Plot title
+    plt.legend(('CamE Unfiltered','CamE Filtered','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
                 loc = 'upper right')#plot legend
     plt.show()#Show the plot
+        
     print('')
+butterFilt('C:/Users/chris/JugglingProject/JSM/Juggling0001_20200527/Intermediate/OpenPoseOutput')

@@ -22,6 +22,7 @@ include_OpenPoseSkeleton = configVariables[8]
 portraitMode = configVariables[14]
 
 rawVideoFolder = baseFilePath+'/Raw/RawGoProData'
+
 def getCameraParams(filepath):
     '''Functions input is the filepath to the calibration folder. 
     The function utilizes opencv functions to find camera parameters based on calibration videos
@@ -175,6 +176,8 @@ def trimVideos(Inputfilepath,OutputFilepath):
     Outputs the trimmed video to specified filepath
     '''    
     for ii in range(len(cam_names)):
+        
+        
         vidcap = cv2.VideoCapture(Inputfilepath+'/'+cam_names[ii]+'.mp4')#Open video
         vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH) #Get video height
         vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) #Get video width

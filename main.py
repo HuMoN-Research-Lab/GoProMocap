@@ -12,8 +12,6 @@ import time
 from scipy.sparse import lil_matrix
 import subprocess
 from create_project import create_project
-from GUI import firstGUI, secondGUI
-
 #=========================Create Folders for project
 configVariables = create_project()
 from EditVideoRunOpandDLC import getCameraParams, concatVideos, undistortVideos,trimVideos, runDeepLabCut,runOpenPose, Parse_Openpose, checkerBoardUndistort
@@ -33,8 +31,7 @@ baseFilePath = configVariables[13]
 baseProjectPath = configVariables[12] 
 calibrateCameras = configVariables[10]
 useCheckerboardVid = configVariables[9]
-
-num_of_cameras = len(cam_names)
+num_of_cameras = int(configVariables[15])
 
 
 rawData = baseFilePath+'/Raw'
@@ -65,10 +62,12 @@ if useCheckerboardVid == True:
         os.mkdir(interfilepath + '/CheckerboardUndistorted')
     checkerUndistortFilepath = interfilepath + '/CheckerboardUndistorted'
     checkerBoardUndistort(checkerVideoFolder,checkerUndistortFilepath)
+
 trimVideos(undistortedFilepath,trimFilepath)
 
 #==========================Run deeplabcut and parse through output
-runDeepLabCut(trimFilepath,DLCfilepath)
+if include_DLC == True:
+    runDeepLabCut(trimFilepath,DLCfilepath)
 
 #==========================Run OpenPose and parse through output
 if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenPoseSkeleton == True:
@@ -76,8 +75,8 @@ if include_OpenPoseFace == True or include_OpenPoseHands ==True or include_OpenP
     points_inFrame = Parse_Openpose(openposeRawFilepath,openposeOutputFilepath)
     smoothOpenPose(openposeOutputFilepath)
 
-points_inFrame =67
-#butterFilt(openposeOutputFilepath)
+#points_inFrame =67
+butterFilt(openposeOutputFilepath)
 #========================Get source video
 if useCheckerboardVid == True:
     SourceVideoFolder = baseFilePath + '/Intermediate/CheckerboardUndistorted'
@@ -130,7 +129,7 @@ if num_of_cameras ==4:
                                           [rootOPFolder+'KalmanOP_'+cam3+'.npy',rootDLCFolder+'dlc_'+cam3+'.npy',cam3],
                                           [rootOPFolder+'KalmanOP_'+cam4+'.npy',rootDLCFolder+'dlc_'+cam4+'.npy',cam4]]
 
-if Len_of_frame == -1:
+if Len_of_frame == '-1':
     frameLengthAllCam = [] #create variable to stoe frame length
     for dir in [fullVideoFolder]:
         for video in os.listdir(dir):

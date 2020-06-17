@@ -84,6 +84,14 @@ class firstGUI():
         portraitMode.grid(row = 3, column = 3)
         self.portraitModeEntry.focus_set()
         
+        #Using tkinter to create an Entry box for the amount of cameras used
+        numCams =tkinter.Label(self.root,text="Enter the number of cameras used in recording: ")
+        self.numCams=tkinter.Entry(self.root)
+        numCams.grid(row = 0, column = 3)
+        self.numCams.grid(row =0, column = 4)
+        self.numCams.focus_set() 
+        self.numCams.insert(0,self.data[9])
+        
         def buttonPush():
             '''Function for what is executed when the button is pushed'''
             #Append the newdata list with all the data that was inputted
@@ -96,7 +104,7 @@ class firstGUI():
             newdata.append(var1.get())
             newdata.append(var2.get())
             newdata.append(var3.get())
-
+            newdata.append(self.numCams.get())
             with open('ProjectFoldersConfig.csv', 'w') as f:#Open the csv file that stores the project info
                 write = csv.writer(open('ProjectFoldersConfig.csv','w'), dialect = 'excel')
                 write.writerow(newdata)#OverWrite the old config variables with new variables
@@ -115,64 +123,75 @@ class secondGUI():
         with open('runProject.csv', newline='') as f:
             reader = csv.reader(f) #Open the csv with the second GUI info
             self.data = list(reader)#And put those variables into a list
-        
+        with open('ProjectFoldersConfig.csv',newline='') as f:
+            read = csv.reader(f)
+            self.camNums = list(read)
+        self.camNums = self.camNums[0]
+        self.camNums = int(self.camNums[9])
         self.data = self.data[0]#Access data
         newdata = []#Create an empty list for new data
+
+        instructions = tkinter.Text(self.root2, height=2, width = 130)
+        instructions.grid(row=0, column = 0,  columnspan =6)
+        instructions.insert(tkinter.END, 'Project Folders have been created in the specified folder path. Place videos into the raw video folder then enter the following   information. ')
 
         #Using tkinter to create an Entry box for camera ones name
         camera1 =tkinter.Label(self.root2,text="Enter camera one name: ")
         self.camera1Entry=tkinter.Entry(self.root2)
-        camera1.grid(row = 0, column = 0)
-        self.camera1Entry.grid(row = 0, column = 1)
+        camera1.grid(row = 1, column = 0)
+        self.camera1Entry.grid(row = 1, column = 1)
         self.camera1Entry.focus_set()       
         self.camera1Entry.insert(0,self.data[0])
         
         
         #Using tkinter to create an Entry box foor camera twos name
-        camera2 =tkinter.Label(self.root2,text="Enter camera two name: ")
-        self.camera2Entry=tkinter.Entry(self.root2)
-        camera2.grid(row = 1, column = 0)
-        self.camera2Entry.grid(row = 1, column = 1)
-        self.camera2Entry.focus_set() 
-        self.camera2Entry.insert(0,self.data[1])
-        
+        if self.camNums > 1:
+            camera2 =tkinter.Label(self.root2,text="Enter camera two name: ")
+            self.camera2Entry=tkinter.Entry(self.root2)
+            camera2.grid(row = 2, column = 0)
+            self.camera2Entry.grid(row = 2, column = 1)
+            self.camera2Entry.focus_set() 
+            self.camera2Entry.insert(0,self.data[1])
+            
         #Using tkinter to create an Entry box for camera threes name
-        camera3 =tkinter.Label(self.root2,text="Enter camera three name: ")
-        self.camera3Entry=tkinter.Entry(self.root2)
-        camera3.grid(row = 2, column = 0)
-        self.camera3Entry.grid(row = 2, column = 1)
-        self.camera3Entry.focus_set() 
-        self.camera3Entry.insert(0,self.data[2])
-        
+        if self.camNums > 2:
+            camera3 =tkinter.Label(self.root2,text="Enter camera three name: ")
+            self.camera3Entry=tkinter.Entry(self.root2)
+            camera3.grid(row = 3, column = 0)
+            self.camera3Entry.grid(row = 3, column = 1)
+            self.camera3Entry.focus_set() 
+            self.camera3Entry.insert(0,self.data[2])
+            
         #Using tkinter to create an Entry box for camera fours name
-        camera4 =tkinter.Label(self.root2,text="Enter camera four name: ")
-        self.camera4Entry=tkinter.Entry(self.root2)
-        camera4.grid(row = 3, column = 0)
-        self.camera4Entry.grid(row = 3, column = 1)
-        self.camera4Entry.focus_set() 
-        self.camera4Entry.insert(0,self.data[3])
-        
+        if self.camNums > 3:
+            camera4 =tkinter.Label(self.root2,text="Enter camera four name: ")
+            self.camera4Entry=tkinter.Entry(self.root2)
+            camera4.grid(row = 3, column = 0)
+            self.camera4Entry.grid(row = 3, column = 1)
+            self.camera4Entry.focus_set() 
+            self.camera4Entry.insert(0,self.data[3])
+            
         #Using tkinter to create an Entry box for the base camera 
         baseCam = tkinter.Label(self.root2, text="Enter the name of the base Camera:")
         self.baseCamEntry = tkinter.Entry(self.root2)
-        baseCam.grid(row = 0, column = 2)
-        self.baseCamEntry.grid(row = 0, column =3)
+        baseCam.grid(row = 1, column = 2)
+        self.baseCamEntry.grid(row = 1, column =3)
         self.baseCamEntry.focus_set()
         self.baseCamEntry.insert(0,self.data[4])
 
         #Using tkinter to create an Entry box for the strat frame of reconstruction
         startFrame = tkinter.Label(self.root2, text="Enter the frame of video you want to start reconstruction:")
         self.startFrameEntry = tkinter.Entry(self.root2)
-        startFrame.grid(row = 1, column = 2)
-        self.startFrameEntry.grid(row = 1, column =3)
+        startFrame.grid(row = 2, column = 2)
+        self.startFrameEntry.grid(row = 2, column =3)
         self.startFrameEntry.focus_set()
         self.startFrameEntry.insert(0,self.data[5])
 
         #Using tkinter to create an Entry box for how long reconstrcution will be
         lenFrame = tkinter.Label(self.root2, text="Enter amount of frames you want to reconstruct (For full video enter -1):")
         self.lenFrameEntry = tkinter.Entry(self.root2)
-        lenFrame.grid(row = 2, column = 2)
-        self.lenFrameEntry.grid(row = 2, column =3)
+        lenFrame.grid(row = 3, column = 2)
+        self.lenFrameEntry.grid(row = 3, column =3)
         self.lenFrameEntry.focus_set()
         self.lenFrameEntry.insert(0,self.data[6])
         
@@ -181,7 +200,7 @@ class secondGUI():
         var1.set(self.data[7])
         include_DLC = tkinter.Checkbutton(self.root2, text='Do you want include DeepLabCut?', var=var1) 
         self.includeDLCEntry = tkinter.Entry(self.root2)
-        include_DLC.grid(row = 0, column = 5)
+        include_DLC.grid(row = 1, column = 5)
         self.includeDLCEntry.focus_set()
 
         ##Using tkinter to create a checkbutton for including Openpose Face
@@ -189,7 +208,7 @@ class secondGUI():
         var2.set(self.data[8])
         include_OpenPoseFace = tkinter.Checkbutton(self.root2, text='Do you want include OpenPose Face Points?', var=var2) 
         self.include_OpenPoseFaceEntry = tkinter.Entry(self.root2)
-        include_OpenPoseFace.grid(row = 1, column = 5)
+        include_OpenPoseFace.grid(row = 2, column = 5)
         self.include_OpenPoseFaceEntry.focus_set()
 
         ##Using tkinter to create a checkbutton for including openpose hand points
@@ -197,7 +216,7 @@ class secondGUI():
         var3.set(self.data[9])
         include_OpenPoseHands = tkinter.Checkbutton(self.root2, text='Do you want include OpenPose Hand Points?', var=var3) 
         self.include_OpenPoseHandsEntry = tkinter.Entry(self.root2)
-        include_OpenPoseHands.grid(row = 2, column = 5)
+        include_OpenPoseHands.grid(row = 3, column = 5)
         self.include_OpenPoseHandsEntry.focus_set()
 
         ##Using tkinter to create a checkbutton for including openpose skeleton
@@ -205,16 +224,25 @@ class secondGUI():
         var4.set(self.data[10])
         include_OpenPoseSkeleton = tkinter.Checkbutton(self.root2, text='Do you want include OpenPose Body Points?', var=var4) 
         self.include_OpenPoseSkeletonEntry = tkinter.Entry(self.root2)
-        include_OpenPoseSkeleton.grid(row = 3, column = 5)
+        include_OpenPoseSkeleton.grid(row = 4, column = 5)
         self.include_OpenPoseSkeletonEntry.focus_set()
         
         def buttonPush():
             '''Function for what is executed when button is pushed'''
             #Append the newdata list with all data from the User inputs            
-            newdata.append(self.camera1Entry.get())  
-            newdata.append(self.camera2Entry.get())
-            newdata.append(self.camera3Entry.get())
-            newdata.append(self.camera4Entry.get())
+            newdata.append(self.camera1Entry.get())
+            if self.camNums > 1:  
+                newdata.append(self.camera2Entry.get())
+            else:
+                newdata.append('0')
+            if self.camNums >2:
+                newdata.append(self.camera3Entry.get())
+            else:
+                newdata.append('0')
+            if self.camNums>3:
+                newdata.append(self.camera4Entry.get())
+            else:
+                newdata.append('0')
             newdata.append(self.baseCamEntry.get())
             newdata.append(self.startFrameEntry.get())
             newdata.append(self.lenFrameEntry.get())

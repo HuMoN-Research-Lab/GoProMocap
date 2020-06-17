@@ -39,7 +39,8 @@ def create_project():
         portraitMode = False
     else:
         portraitMode = True
-    
+    numCamera = config[9]
+
     root2 = tkinter.Tk()#Open tkinter
     secondGUI(root2).runReconstruction()#Run the second GUI
     root2.mainloop()#Run GUI
@@ -48,7 +49,12 @@ def create_project():
         config2 = list(reader)#Place variables into a list
     #Name the variables
     config2 = config2[0]
-    cam_names = [config2[0], config2[1], config2[2], config2[3]]
+    if config2[2] == '0' and config2[3] =='0':
+        cam_names = [config2[0],config2[1]]
+    elif config2[2] != '0' and config2[3] == '0':
+        cam_names = [config2[0],config2[1],config2[2]]
+    else:
+        cam_names = [config2[0], config2[1], config2[2], config2[3]]
     base_cam_index = config2[4]
     startframe  = config2[5]
     lenFrame= config2[6]
@@ -140,7 +146,7 @@ def create_project():
         os.mkdir(openposeOutputFilepath)
 
     #Put all variables into a list    
-    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath,portraitMode]
+    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath,portraitMode, numCamera]
     #Return list of variables
     return configVariables 
 
@@ -157,6 +163,7 @@ def GetVariables():
     session_num = config[3]
     baseProjectPath = config[4]
     DLCfilepath = config[5]
+    numCameras = config[6]
     #Bool values are assigned T/F through if statements since they are saved as 0 or 1    
     if config[6] == '0':
         useCheckerBoardVid = False
@@ -176,7 +183,12 @@ def GetVariables():
         config2 = list(reader)#Put variables into list
     #Name the variables
     config2 = config2[0]
-    cam_names = [config2[0], config2[1], config2[2], config2[3]]
+    if config2[2] == '0' and config2[3] =='0':
+        cam_names = [config2[0],config2[1]]
+    elif config2[2] != '0' and config2[3] == '0':
+        cam_names = [config2[0],config2[1],config2[2]]
+    else:
+        cam_names = [config2[0], config2[1], config2[2], config2[3]]
     base_cam_index = config2[4]
     startframe  = config2[5]
     lenFrame= config2[6]
@@ -201,6 +213,6 @@ def GetVariables():
     sessionID =  project+session_num+'_'+date
     baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID         
     #Place Variables intp a list
-    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath,portraitMode]
+    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath,portraitMode, numCameras]
     return configVariables  
 

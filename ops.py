@@ -167,7 +167,7 @@ def video_loader(fileName,Cam_Indx):
     Cam_Index: CamA/CamB/CamC, depand on how many cameras are used during recording
     """
     
-
+    print(configVariables, 'OPS')
     if not os.path.exists(baseProjectPath + '/Calibration'):
         os.mkdir(baseProjectPath + '/Calibration')
     calibratefilepath = baseProjectPath + '/Calibration'
