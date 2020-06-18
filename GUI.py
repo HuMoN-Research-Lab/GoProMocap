@@ -57,40 +57,50 @@ class firstGUI():
         DLCconfigPath =tkinter.Label(self.root,text="Enter DLC Config Path: ")
         self.DLCConfigEntry=tkinter.Entry(self.root)
         DLCconfigPath.grid(row = 0, column = 3)
-        self.DLCConfigEntry.grid(row =0, column = 4)
+        self.DLCConfigEntry.grid(row =0, column = 4, columnspan=2)
         self.DLCConfigEntry.focus_set() 
         self.DLCConfigEntry.insert(0,self.data[5])
-        
+
+
+        #Using tkinter to create an Entry box for the OpenPose file path
+        OpenPosePath = tkinter.Label(self.root,text="Enter Path to Openpose Folder")
+        self.OpenPosePathEntry=tkinter.Entry(self.root)
+        OpenPosePath.grid(row= 1, column = 3)
+        self.OpenPosePathEntry.grid(row = 1, column = 4, columnspan= 2)
+        self.OpenPosePathEntry.focus_set()
+        self.OpenPosePathEntry.insert(0,self.data[9])
+
         ##Using tkinter to create an Checkbutton for chessboard videos 
         var1 = tkinter.IntVar()
         var1.set(self.data[6])
         useCheckerBoardVid = tkinter.Checkbutton(self.root, text='Do you need to use chessboard videos?', var=var1) 
         self.useCheckerBoardVideEntry = tkinter.Entry(self.root)
-        useCheckerBoardVid.grid(row = 1, column = 3)
+        useCheckerBoardVid.grid(row = 3, column = 3)
         self.useCheckerBoardVideEntry.focus_set()
+        
         ##Using tkinter to create an Checkbutton for calibrating Cameras
         var2 = tkinter.IntVar()
         var2.set(self.data[7])
         calibrateCameras = tkinter.Checkbutton(self.root, text='Do you need to calibrate cameras?', var=var2) 
         self.calibrateCamerasEntry = tkinter.Entry(self.root)
-        calibrateCameras.grid(row = 2, column = 3)
+        calibrateCameras.grid(row = 4, column = 3)
         self.calibrateCamerasEntry.focus_set()
-        
+        '''
         ##Using tkinter to create an Checkbutton for portrait mode
         var3 = tkinter.IntVar()
         var3.set(self.data[8])
         portraitMode = tkinter.Checkbutton(self.root, text='Did you record the videos in portrait mode', var=var3) 
         self.portraitModeEntry = tkinter.Entry(self.root)
-        portraitMode.grid(row = 3, column = 3)
-        self.portraitModeEntry.focus_set()
+        portraitMode.grid(row = 5, column = 3)
+        self.portraitModeEntry.focus_set()'''
         
         #Using tkinter to create an Entry box for the amount of cameras used
         numCams =tkinter.Label(self.root,text="Enter the number of cameras used in recording: ")
         self.numCams=tkinter.Entry(self.root)
-        numCams.grid(row = 0, column = 3)
-        self.numCams.grid(row =0, column = 4)
+        numCams.grid(row = 2, column = 3)
+        self.numCams.grid(row =2, column = 4)
         self.numCams.focus_set() 
-        self.numCams.insert(0,self.data[9])
+        self.numCams.insert(0,self.data[8])
         
         def buttonPush():
             '''Function for what is executed when the button is pushed'''
@@ -103,8 +113,8 @@ class firstGUI():
             newdata.append(self.DLCConfigEntry.get())
             newdata.append(var1.get())
             newdata.append(var2.get())
-            newdata.append(var3.get())
             newdata.append(self.numCams.get())
+            newdata.append(self.OpenPosePathEntry.get())
             with open('ProjectFoldersConfig.csv', 'w') as f:#Open the csv file that stores the project info
                 write = csv.writer(open('ProjectFoldersConfig.csv','w'), dialect = 'excel')
                 write.writerow(newdata)#OverWrite the old config variables with new variables
@@ -127,7 +137,7 @@ class secondGUI():
             read = csv.reader(f)
             self.camNums = list(read)
         self.camNums = self.camNums[0]
-        self.camNums = int(self.camNums[9])
+        self.camNums = int(self.camNums[8])
         self.data = self.data[0]#Access data
         newdata = []#Create an empty list for new data
 
@@ -166,8 +176,8 @@ class secondGUI():
         if self.camNums > 3:
             camera4 =tkinter.Label(self.root2,text="Enter camera four name: ")
             self.camera4Entry=tkinter.Entry(self.root2)
-            camera4.grid(row = 3, column = 0)
-            self.camera4Entry.grid(row = 3, column = 1)
+            camera4.grid(row = 4, column = 0)
+            self.camera4Entry.grid(row = 4, column = 1)
             self.camera4Entry.focus_set() 
             self.camera4Entry.insert(0,self.data[3])
             
@@ -195,6 +205,14 @@ class secondGUI():
         self.lenFrameEntry.focus_set()
         self.lenFrameEntry.insert(0,self.data[6])
         
+        #Using tkinter to create an Entry box for rotating video
+        rotateVid = tkinter.Label(self.root2, text='Enter if you need to rotate video. Enter ccw for counterclockwise, cw for clockwise or 0 for no rotate')
+        self.rotateVidEntry = tkinter.Entry(self.root2)
+        rotateVid.grid(row = 4, column =2)
+        self.rotateVidEntry.grid(row =4, column = 3)
+        self.rotateVidEntry.focus_set()
+        self.rotateVidEntry.insert(0,self.data[11])
+
         ##Using tkinter to create a checkbutton for including deeplabcut
         var1 = tkinter.IntVar()
         var1.set(self.data[7])
@@ -250,6 +268,7 @@ class secondGUI():
             newdata.append(var2.get())
             newdata.append(var3.get())
             newdata.append(var4.get())
+            newdata.append(self.rotateVidEntry.get())
 
             with open('runProject.csv', 'w') as f:#Open the csv file that stores the variables
                 write = csv.writer(open('runProject.csv','w'), dialect = 'excel')

@@ -58,7 +58,7 @@ def butterFilt(Inputfilepath):
     for jj in range(len(cam_names)):
         data = np.load(Inputfilepath +'/OP_'+cam_names[jj]+'.npy')
         filtData = data
-        filtfiltData = data
+        
         #diffdata = np.diff(data, n=2,axis =0)
         plt.plot(data[:,0,1],marker=markers[1],color = colors[jj])#plot the original data before filter
 
@@ -68,22 +68,22 @@ def butterFilt(Inputfilepath):
             for kk in range(3):
                 if kk == 0 or kk ==1:
                     b, a  = signal.butter(4,w,'low')
-                    filtfiltData[:,ii,kk] = signal.filtfilt(b,a, data[:,ii,kk])
+                    filtData[:,ii,kk] = signal.filtfilt(b,a, data[:,ii,kk])
                 if kk ==2:
-                    filtfiltData[:,ii,kk] = data[:,ii,kk]
+                    filtData[:,ii,kk] = data[:,ii,kk]
         
         
         #filtData = (np.diff(filtData, n=1, axis = 0))  
-        plt.plot(filtfiltData[:,0,1],marker=markers[0],color = colors2[jj])#Plot Filtered Data 
+    #    plt.plot(filtfiltData[:,0,1],marker=markers[0],color = colors2[jj])#Plot Filtered Data 
        
-        np.save(Inputfilepath +'/FiltOP_'+cam_names[jj]+'.npy', data)                 
+        np.save(Inputfilepath +'/FiltOP_'+cam_names[jj]+'.npy', filtData)                 
         
-    plt.xlabel('Frame #')#Plot xlabel
-    plt.ylabel('Pixel Coordinates')#Plot ylabel
-    plt.title('Y-Coord of OpenPose Neck')#Plot title
-    plt.legend(('CamE Unfiltered','CamE Filtered','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
-                loc = 'upper right')#plot legend
-    plt.show()#Show the plot
+    #plt.xlabel('Frame #')#Plot xlabel
+    #plt.ylabel('Pixel Coordinates')#Plot ylabel
+    #plt.title('Y-Coord of OpenPose Neck')#Plot title
+    #plt.legend(('CamE Unfiltered','CamE Filtered','CamF Unfiltered','CamF Filtered','CamG Unfiltered','CamG Filtered','CamH Unfiltered','CamH Filtered'),
+    #            loc = 'upper right')#plot legend
+    #plt.show()#Show the plot
         
-    print('')
-butterFilt('C:/Users/chris/JugglingProject/JSM/Juggling0001_20200527/Intermediate/OpenPoseOutput')
+    #print('')
+#butterFilt('C:/Users/chris/JugglingProject/JSM/Juggling0001_20200527/Intermediate/OpenPoseOutput')

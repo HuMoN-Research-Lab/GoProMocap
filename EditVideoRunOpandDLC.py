@@ -19,7 +19,9 @@ DLCconfigPath = configVariables[11]
 include_OpenPoseFace = configVariables[6]
 include_OpenPoseHands = configVariables[7]
 include_OpenPoseSkeleton = configVariables[8]
-portraitMode = configVariables[14]
+openPoseFolderPath = configVariables[17]
+rotateVid = configVariables[16]
+boolRotateVid = configVariables[15]
 
 rawVideoFolder = baseFilePath+'/Raw/RawGoProData'
 
@@ -146,17 +148,14 @@ def concatVideos(InputFilePath,OutputFilepath):
     cam3vids.close()
     cam4vids.close()
     #Use ffmpeg to join all parts of the video together
+    in_file= ffmpeg.input
     for jj in range(len(cam_names)):
         (ffmpeg
         .input(InputFilePath+'/cam'+str(jj+1)+'vids.txt', format='concat', safe=0)
         .output(OutputFilepath+'/'+cam_names[jj]+'.mp4', c='copy')
         .run()
         )
-    #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath+'/cam1vids.txt', '-c' ,'copy' ,filepath+'/'+ cam1+'.mp4'])
-    #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath+'/cam2vids.txt', '-c' ,'copy' ,filepath+'/'+ cam2+'.mp4'])
-    #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath+'/cam3vids.txt', '-c' ,'copy' ,filepath+'/'+ cam3+'.mp4'])
-    #subprocess.call(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', filepath+'/cam4vids.txt', '-c' ,'copy' ,filepath+'/'+ cam4+'.mp4'])
-
+   
 
 #################### Undistortion #########################
 def undistortVideos(Inputfilepath,Outputfilepath):
@@ -166,7 +165,10 @@ def undistortVideos(Inputfilepath,Outputfilepath):
     '''
     for jj in range(len(cam_names)):
         #Uses subprocess for a command line prompt to use ffmpeg to undistort video based on intrinsics 
-        subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", Outputfilepath+'/'+cam_names[jj]+'.mp4'])
+        if boolRotateVid ==True:
+            subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022,transpose="+str(rotateVid), Outputfilepath+'/'+cam_names[jj]+'.mp4'])
+        if boolRotateVid ==False:
+            subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", Outputfilepath+'/'+cam_names[jj]+'.mp4'])
 
 
 def trimVideos(Inputfilepath,OutputFilepath):
@@ -264,7 +266,7 @@ def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
     else:
         rotation = 0 
     ###################### OpenPose ######################################
-    #os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
+    os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
     j = 0
     for jj in range(len(cam_names)):
         subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+cam_names[jj]+'.mp4', '--frame_rotate='+str(rotation) ,'--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[jj]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[jj]])

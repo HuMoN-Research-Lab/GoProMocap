@@ -35,11 +35,9 @@ def create_project():
         calibrateCameras = False
     else:
         calibrateCameras = True
-    if config[8] == '0':
-        portraitMode = False
-    else:
-        portraitMode = True
-    numCamera = config[9]
+    
+    numCamera = config[8]
+    OpenPoseFolderPath = config[9]
 
     root2 = tkinter.Tk()#Open tkinter
     secondGUI(root2).runReconstruction()#Run the second GUI
@@ -75,6 +73,16 @@ def create_project():
         include_OpenPoseSkeleton = False 
     else:
         include_OpenPoseSkeleton = True
+    if config2[11] =='ccw':
+        rotateVid = 2
+        boolRotateVid = True
+    elif config2[11] =='cw':
+        rotateVid = 1
+        boolRotateVid = True
+    else:
+        rotateVid=0
+        boolRotateVid = False
+
     #Create all Folder Names
     sessionID =  project+session_num+'_'+date
     baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID    
@@ -146,7 +154,7 @@ def create_project():
         os.mkdir(openposeOutputFilepath)
 
     #Put all variables into a list    
-    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath,portraitMode, numCamera]
+    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath, numCamera, rotateVid, boolRotateVid,OpenPoseFolderPath]
     #Return list of variables
     return configVariables 
 
@@ -173,11 +181,8 @@ def GetVariables():
         calibrateCameras = False
     else:
         calibrateCameras = True
-    if config[8] == '0':
-        portraitMode = False
-    else:
-        portraitMode = True
-
+    numCameras = config[8]
+    OpenPoseFolderPath = config[9]
     with open('runProject.csv', 'r') as f:#Open the csv that stores the variables
         reader = csv.reader(f)#Read the variables
         config2 = list(reader)#Put variables into list
@@ -209,10 +214,17 @@ def GetVariables():
         include_OpenPoseSkeleton = False 
     else:
         include_OpenPoseSkeleton = True
-    
+    if config2[11] =='ccw':
+        rotateVid = 2
+        boolRotateVid = True
+    elif config2[11] =='cw':
+        rotateVid = 1
+        boolRotateVid = True
+    else:
+        boolRotateVid = False
     sessionID =  project+session_num+'_'+date
     baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID         
     #Place Variables intp a list
-    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath,portraitMode, numCameras]
+    configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath, numCameras, boolRotateVid, rotateVid,OpenPoseFolderPath]
     return configVariables  
 
