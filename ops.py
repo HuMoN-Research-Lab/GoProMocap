@@ -14,7 +14,7 @@ import re
 import cv2.aruco as aruco
 from create_project import GetVariables
 from itertools import combinations
-from pykalman import KalmanFilter
+
 import statistics
 
 configVariables = GetVariables()

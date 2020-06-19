@@ -55,7 +55,7 @@ openposeOutputFilepath = interfilepath + '/OpenPoseOutput'
 if calibrateCameras:
     getCameraParams(calibrationFilePath)
 #===========================Concat,Undistort and Trim Videos 
-#concatVideos(rawVideoFolder,combinedFilepath)
+concatVideos(rawVideoFolder,combinedFilepath)
 undistortVideos(combinedFilepath,undistortedFilepath)
 if useCheckerboardVid == True:
     if not os.path.exists(interfilepath + '/CheckerboardUndistorted'):

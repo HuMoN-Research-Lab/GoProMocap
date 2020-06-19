@@ -166,7 +166,7 @@ def undistortVideos(Inputfilepath,Outputfilepath):
     for jj in range(len(cam_names)):
         #Uses subprocess for a command line prompt to use ffmpeg to undistort video based on intrinsics 
         if boolRotateVid ==True:
-            subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022,transpose="+str(rotateVid), Outputfilepath+'/'+cam_names[jj]+'.mp4'])
+            subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-0:k2=0,transpose="+str(rotateVid), Outputfilepath+'/'+cam_names[jj]+'.mp4'])
         if boolRotateVid ==False:
             subprocess.call(['ffmpeg', '-i', Inputfilepath+'/'+cam_names[jj]+'.mp4', '-vf', "lenscorrection=cx=0.5:cy=0.5:k1=-.115:k2=-0.022", Outputfilepath+'/'+cam_names[jj]+'.mp4'])
 
@@ -215,7 +215,7 @@ def runDeepLabCut(Inputfilepath,OutputFilepath):
     '''Function inputs are filepath to videos to be tracked by DLC and the folder to save the output to
     Videos are copied to output folder, than processed in DLC based on the dlc config path 
     DLC output is saved in outputfilepath and the output is also converted to npy and saved as well
-    '''
+    
     
     #####################Copy Videos to DLC Folder############
     for dir in [Inputfilepath]:#Iterates through input folder
@@ -254,23 +254,24 @@ def runDeepLabCut(Inputfilepath,OutputFilepath):
         print(parsedDlcData)
         np.save(OutputFilepath+'/DLCnpy/dlc_'+cam_names[j]+'.npy',parsedDlcData)#Save data
         j+=1
+    '''
+    print('LOOP Through DLC Function')
            
 
 def runOpenPose(Inputfilepath,VideoOutputPath,DataOutputFilepath):
     '''Function inputs are the undistorted video filepath, the filepath to save the video output, and the filepath to save the data output
     The function takes the undistorted video and processes the videos in openpose
     The output is openpose overlayed videos and raw openpose data
-    '''
-    if portraitMode:
-        rotation = 90
-    else:
-        rotation = 0 
+    '
+    
     ###################### OpenPose ######################################
-    os.chdir("C:/Users/MatthisLab/openpose") # change the directory to openpose
+    os.chdir(openPoseFolderPath) # change the directory to openpose
     j = 0
     for jj in range(len(cam_names)):
         subprocess.call(['bin/OpenPoseDemo.exe', '--video', Inputfilepath+'/'+cam_names[jj]+'.mp4', '--frame_rotate='+str(rotation) ,'--hand','--face','--write_video', VideoOutputPath+'/OpenPose'+cam_names[jj]+'.avi',  '--write_json', DataOutputFilepath+'/'+cam_names[jj]])
         j =+1
+        '''
+    print('LoopThroughOpenpose')
 
 
 def Parse_Openpose(Inputfilepath,OutputFilepath):

@@ -38,51 +38,6 @@ def create_project():
     
     numCamera = config[8]
     OpenPoseFolderPath = config[9]
-
-    root2 = tkinter.Tk()#Open tkinter
-    secondGUI(root2).runReconstruction()#Run the second GUI
-    root2.mainloop()#Run GUI
-    with open('runProject.csv', 'r') as f:#Open csv that stores variables
-        reader = csv.reader(f)#Read the variables
-        config2 = list(reader)#Place variables into a list
-    #Name the variables
-    config2 = config2[0]
-    if config2[2] == '0' and config2[3] =='0':
-        cam_names = [config2[0],config2[1]]
-    elif config2[2] != '0' and config2[3] == '0':
-        cam_names = [config2[0],config2[1],config2[2]]
-    else:
-        cam_names = [config2[0], config2[1], config2[2], config2[3]]
-    base_cam_index = config2[4]
-    startframe  = config2[5]
-    lenFrame= config2[6]
-    #Bool values are assigned T/F through if statements since they are saved as 0 or 1    
-    if config2[7] =='0':
-        include_DLC = False 
-    else:
-        include_DLC = True
-    if config2[8] =='0':
-        include_OpenPoseFace = False 
-    else:
-        include_OpenPoseFace = True
-    if config2[9] =='0':
-        include_OpenPoseHands = False 
-    else:
-        include_OpenPoseHands = True
-    if config2[10] =='0':
-        include_OpenPoseSkeleton = False 
-    else:
-        include_OpenPoseSkeleton = True
-    if config2[11] =='ccw':
-        rotateVid = 2
-        boolRotateVid = True
-    elif config2[11] =='cw':
-        rotateVid = 1
-        boolRotateVid = True
-    else:
-        rotateVid=0
-        boolRotateVid = False
-
     #Create all Folder Names
     sessionID =  project+session_num+'_'+date
     baseFilePath = baseProjectPath+'/'+subject+'/'+sessionID    
@@ -102,7 +57,6 @@ def create_project():
     processedFilePath = baseFilePath +'/Processed'
     trimFilepath = interfilepath +'/Trimmed'
     openposeOutputFilepath = interfilepath + '/OpenPoseOutput'
-
     #Create Folders for Project
     if not os.path.exists(baseProjectPath+'/'+subject):
         os.mkdir(baseProjectPath+'/'+subject)
@@ -152,6 +106,51 @@ def create_project():
         os.mkdir(trimFilepath)
     if not os.path.exists(openposeOutputFilepath):
         os.mkdir(openposeOutputFilepath)
+
+    root2 = tkinter.Tk()#Open tkinter
+    secondGUI(root2).runReconstruction()#Run the second GUI
+    root2.mainloop()#Run GUI
+    with open('runProject.csv', 'r') as f:#Open csv that stores variables
+        reader = csv.reader(f)#Read the variables
+        config2 = list(reader)#Place variables into a list
+    #Name the variables
+    config2 = config2[0]
+    if config2[2] == '0' and config2[3] =='0':
+        cam_names = [config2[0],config2[1]]
+    elif config2[2] != '0' and config2[3] == '0':
+        cam_names = [config2[0],config2[1],config2[2]]
+    else:
+        cam_names = [config2[0], config2[1], config2[2], config2[3]]
+    base_cam_index = config2[4]
+    startframe  = config2[5]
+    lenFrame= config2[6]
+    #Bool values are assigned T/F through if statements since they are saved as 0 or 1    
+    if config2[7] =='0':
+        include_DLC = False 
+    else:
+        include_DLC = True
+    if config2[8] =='0':
+        include_OpenPoseFace = False 
+    else:
+        include_OpenPoseFace = True
+    if config2[9] =='0':
+        include_OpenPoseHands = False 
+    else:
+        include_OpenPoseHands = True
+    if config2[10] =='0':
+        include_OpenPoseSkeleton = False 
+    else:
+        include_OpenPoseSkeleton = True
+    if config2[11] =='ccw':
+        rotateVid = 2
+        boolRotateVid = True
+    elif config2[11] =='cw':
+        rotateVid = 1
+        boolRotateVid = True
+    else:
+        rotateVid=0
+        boolRotateVid = False
+
 
     #Put all variables into a list    
     configVariables = [subject, cam_names, base_cam_index, lenFrame, startframe, include_DLC,include_OpenPoseFace,include_OpenPoseHands,include_OpenPoseSkeleton,useCheckerBoardVid,calibrateCameras, DLCfilepath, baseProjectPath, baseFilePath, numCamera, rotateVid, boolRotateVid,OpenPoseFolderPath]
