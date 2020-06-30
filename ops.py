@@ -588,7 +588,6 @@ def SBA(Len_of_frame,points2d,ba_input,VIS_cam_List,points_inFrame,base_Cam_Inde
                     reproj2[i][j] = x[i][j].dot(ProjMats[VIS_cam_List[k]].T)
                     true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
         
-
         elif num_of_cameras == 4:
             l = len(param)//4
             ProjMats = (param[:l].reshape((3,4)),param[l:2*l].reshape((3,4)),param[2*l:3*l].reshape((3,4)),param[3*l:].reshape((3,4)))
