@@ -542,6 +542,175 @@ def charuco_detect(path,Cam_index,video_resolution):
 
 
 
+def SBA(Len_of_frame,points2d,ba_input,VIS_cam_List,points_inFrame,base_Cam_Index):
+    """
+    sparse bundle adjust
+    Len_of_points:how many points to be recontrusct
+    points2D: all pixel locations(ground turth)
+    ba_input:1D vector include flattened 3d points and projection matrix
+    points_inFrame:number of each keypoints per frame
+    base_Cam_Index: 'A'/'B'/'C'
+    """
+
+    def fun(ba_input):
+        p = ba_input[:Len_of_frame*3*points_inFrame].reshape((-1,points_inFrame,3)) #reshape back to(len,25,3)
+        param = ba_input[Len_of_frame*points_inFrame*3:]
+
+        temp = np.ones((p.shape[0],p.shape[1],1))
+        x = np.concatenate((p,temp),axis=2)
+        true_pixel_coord = np.zeros((2*Len_of_frame,points_inFrame,2))
+
+        if num_of_cameras == 2:
+            l = len(param)//2
+            ProjMats = (param[:l].reshape((3,4)),param[l:].reshape((3,4)))
+            true_pixel_coord[:Len_of_frame] = points2d[base_cam[base_Cam_Index]]
+            reproj1 = x.dot(ProjMats[base_cam[base_Cam_Index]].T)
+            reproj2 = np.zeros((Len_of_frame,points_inFrame,3))
+            
+            for i in range(Len_of_frame):
+                for j in range(points_inFrame):
+                    k = i*points_inFrame + j
+                    reproj2[i][j] = x[i][j].dot(ProjMats[VIS_cam_List[k]].T)
+                    true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
+            
+            
+        elif num_of_cameras == 3:
+            l = len(param)//3
+            ProjMats = (param[:l].reshape((3,4)),param[l:2*l].reshape((3,4)),param[2*l:].reshape((3,4)))
+            true_pixel_coord[:Len_of_frame] = points2d[base_cam[base_Cam_Index]]
+            reproj1 = x.dot(ProjMats[base_cam[base_Cam_Index]].T)
+            reproj2 = np.zeros((Len_of_frame,points_inFrame,3))
+            
+            
+            for i in range(Len_of_frame):
+                for j in range(points_inFrame):
+                    k = i*points_inFrame + j
+                    reproj2[i][j] = x[i][j].dot(ProjMats[VIS_cam_List[k]].T)
+                    true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
+        
+
+        elif num_of_cameras == 4:
+            l = len(param)//4
+            ProjMats = (param[:l].reshape((3,4)),param[l:2*l].reshape((3,4)),param[2*l:3*l].reshape((3,4)),param[3*l:].reshape((3,4)))
+            true_pixel_coord[:Len_of_frame] = points2d[base_cam[base_Cam_Index]]
+            reproj1 = x.dot(ProjMats[base_cam[base_Cam_Index]].T)
+            reproj2 = np.zeros((Len_of_frame,points_inFrame,3))
+            
+            
+            for i in range(Len_of_frame):
+                for j in range(points_inFrame):
+                    k = i*points_inFrame + j
+                    reproj2[i][j] = x[i][j].dot(ProjMats[VIS_cam_List[k]].T)
+                    true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
+
+            
+            
+        reproj_points = np.vstack((reproj1,reproj2))
+ 
+        reproj_points = reproj_points[:,:,:2] / reproj_points[:,:,2,np.newaxis]
+        #res = (reproj_points-true_pixel_coord)**2
+        res = abs(reproj_points-true_pixel_coord)
+
+
+        return res.ravel()
+
+
+    def bundle_adjustment_sparsity(n_point3D):
+        """
+        n_observation:total length of pixel coordinates
+
+        """
+        m = n_point3D * 2 * 2 #row
+        n = n_point3D * 3 + 12*num_of_cameras #col 
+        A = lil_matrix((m, n), dtype=int)
+
+        if num_of_cameras == 2:
+            if base_Cam_Index == 'A':
+                A[:m//2,-24:-12] = 1
+                A[m//2:,-12:] = 1
+            else:
+                A[m//2:,-24:-12] = 1
+                A[:m//2,-12:] = 1
+        
+        elif num_of_cameras == 3:
+            if base_Cam_Index == 'A':
+                A[:m//2,-36:-24] = 1
+            elif base_Cam_Index == 'B':
+                A[:m//2,-24:-12] = 1
+            elif base_Cam_Index == 'C':
+                A[:m//2,-12:] = 1
+            
+            for i in range(n_point3D):
+                s1,s2 = (VIS_cam_List[i]-3)*12,(VIS_cam_List[i]-3)*12+12
+                if s2 == 0:
+                    A[2*i,s1:] = 1
+                    A[2*i+1,s1:] = 1
+                else:
+                    A[2*i,s1:s2] = 1
+                    A[2*i+1,s1:s2] = 1 
+        
+        elif num_of_cameras == 4:
+            if base_Cam_Index == 'A':
+                A[:m//2,-48:-36] = 1
+            elif base_Cam_Index == 'B':
+                A[:m//2,-36:-24] = 1
+            elif base_Cam_Index == 'C':
+                A[:m//2,-24:-12] = 1
+            elif base_Cam_Index == 'D':
+                A[:m//2,-12:] = 1
+            
+            for i in range(n_point3D):
+                s1,s2 = (VIS_cam_List[i]-4)*12,(VIS_cam_List[i]-4)*12+12
+                if s2 == 0:
+                    A[2*i,s1:] = 1
+                    A[2*i+1,s1:] = 1
+                else:
+                    A[2*i,s1:s2] = 1
+                    A[2*i+1,s1:s2] = 1 
+                    
+
+        for i in range(n_point3D):
+            for s in range(3):
+                A[2*i,i*3+s] =1 
+                A[2*i+1,i*3+s] =1
+    
+
+        A[m//2:,:-12*num_of_cameras] = A[:m//2,:-12*num_of_cameras]
+
+        
+        return A
+    
+    
+    
+    residual = fun(ba_input)
+    print('max index',np.argmax(residual))
+    A = bundle_adjustment_sparsity(Len_of_frame*points_inFrame)
+    plt.plot(residual)
+    plt.show()
+
+    x0 = ba_input
+
+    t0 = time.time()
+    res = least_squares(fun,x0,jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-5, method='trf')
+    #res = least_squares(fun,x0, verbose=2, x_scale='jac', ftol=1e-4, method='trf')
+    t1 = time.time()
+    print("Optimization took {0:.0f} seconds".format(t1 - t0))
+
+    plt.plot(res.fun)
+    plt.show()
+
+    param = res.x
+    print(param.shape)
+    optimized_3D = param[:Len_of_frame*3*points_inFrame]
+    Optimized_Proj_mat = param[Len_of_frame*3*points_inFrame:]
+
+    coords = optimized_3D.reshape((-1,points_inFrame,3))
+
+    return coords,Optimized_Proj_mat
+
+
+
+
 
 
 
