@@ -39,9 +39,11 @@ calibrateCameras = False
 num_of_cameras = 4 #Supports up to 4, if you use 4 cameras you must have 4 cameras in cam_names
 base_Cam_Index = 'CamF'  #Put same name as you did in cam_names
 
+#if user wants to turn on the optimizer for camera projection matrix after calibration
+optimize_projection_matrix = False
+
 #What features from video you are tracking
 include_DLC = False
-
 include_OpenPoseSkeleton = True
 include_OpenPoseHands = True
 include_OpenPoseFace = False
