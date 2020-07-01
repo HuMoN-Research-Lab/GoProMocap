@@ -14,6 +14,9 @@ import re
 import cv2.aruco as aruco
 from create_project import GetVariables
 from itertools import combinations
+from scipy.optimize import least_squares
+import time
+from scipy.sparse import lil_matrix
 
 import statistics
 
