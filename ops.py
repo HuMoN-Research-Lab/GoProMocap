@@ -395,10 +395,11 @@ class triangulateFlex:
         return X,vis_list,valid_point_list
 
 
+
 def aruco_detect(path,Cam_indx,video_resolution):
-
-    
-
+    """
+    CALIBRATE CAMERA USING SINGLE ARUCO MARKERS
+    """
     images = glob.glob(path)
     count = 0
     for fname in images:
@@ -462,6 +463,9 @@ def aruco_detect(path,Cam_indx,video_resolution):
 
 
 def charuco_detect(path,Cam_index,video_resolution):
+    """
+    CALIBRATE CAMERA USING CHARUCO BOARD
+    """
     
     aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_250)
     board = aruco.CharucoBoard_create(7, 5, 1, .8, aruco_dict)
@@ -544,7 +548,7 @@ def charuco_detect(path,Cam_index,video_resolution):
 
 def SBA(Len_of_frame,points2d,ba_input,VIS_cam_List,points_inFrame,base_Cam_Index):
     """
-    sparse bundle adjust
+    sparse bundle adjustment
     Len_of_points:how many points to be recontrusct
     points2D: all pixel locations(ground turth)
     ba_input:1D vector include flattened 3d points and projection matrix
@@ -554,12 +558,14 @@ def SBA(Len_of_frame,points2d,ba_input,VIS_cam_List,points_inFrame,base_Cam_Inde
 
     def fun(ba_input):
         p = ba_input[:Len_of_frame*3*points_inFrame].reshape((-1,points_inFrame,3)) #reshape back to(len,25,3)
-        param = ba_input[Len_of_frame*points_inFrame*3:]
+        param = ba_input[Len_of_frame*points_inFrame*3:]#draw out the projection matrixs
 
-        temp = np.ones((p.shape[0],p.shape[1],1))
+        temp = np.ones((p.shape[0],p.shape[1],1))#column of 1s, in order to make homogeneous coordinates
         x = np.concatenate((p,temp),axis=2)
-        true_pixel_coord = np.zeros((2*Len_of_frame,points_inFrame,2))
-
+        true_pixel_coord = np.zeros((2*Len_of_frame,points_inFrame,2))#make room for the true pixel coordinates
+        
+        
+        #reprojecions
         if num_of_cameras == 2:
             l = len(param)//2
             ProjMats = (param[:l].reshape((3,4)),param[l:].reshape((3,4)))
@@ -603,7 +609,7 @@ def SBA(Len_of_frame,points2d,ba_input,VIS_cam_List,points_inFrame,base_Cam_Inde
                     true_pixel_coord[Len_of_frame+i][j] = points2d[VIS_cam_List[k]][i][j]
 
             
-            
+        #calculate errors   
         reproj_points = np.vstack((reproj1,reproj2))
  
         reproj_points = reproj_points[:,:,:2] / reproj_points[:,:,2,np.newaxis]
