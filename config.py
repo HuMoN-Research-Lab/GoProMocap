@@ -48,6 +48,9 @@ include_OpenPoseSkeleton = True
 include_OpenPoseHands = True
 include_OpenPoseFace = False
 
+#how many frame in the calibration folder
+calibration_frame = 2
+calibration_num_of_keypoints = 24
 #What frame of video you want to start reconstruction
 start_frame = 700
 #How many frames you want to reconstruct, for full video input -1
