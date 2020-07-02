@@ -184,14 +184,14 @@ else:
 
 def calibration(calibrate_frame,points_perFrame):
 
-    K_CamA,A_dist,A_rvecs,A_tvecs,A_corners = charuco_detect('Calibration/CamA_Calibration/*.jpg','A',video_resolution)#this function in ops line 437
+    K_CamA,A_dist,A_rvecs,A_tvecs,A_corners = charuco_detect(baseFilePath+'/Calibration/'+cam1+'_Calibration/*jpg',cam1,video_resolution)#this function in ops line 437
     tvec_CamA,rvec_CamA = A_tvecs[1],A_rvecs[1]#tvec/rvec generated 1 per image in the calibration folder, so we only need one of them
     RoMat_A, _ = cv2.Rodrigues(rvec_CamA)#convert (3,1) rvec to (3,3) rotation matrix
     H_CamA = R_t2H(RoMat_A,tvec_CamA)#this funciton in ops line 87, combine rotation matrix and tvec into a Homogeniens transformation matrix
     A_corners = A_corners.reshape((2,points_perFrame,2))
 
 
-    K_CamB,B_dist,B_rvecs,B_tvecs,B_corners = charuco_detect('Calibration/CamB_Calibration/*.jpg','B',video_resolution)
+    K_CamB,B_dist,B_rvecs,B_tvecs,B_corners = charuco_detect(baseFilePath+'/Calibration/'+cam2+'_Calibration/*jpg',cam2,video_resolution)
     tvec_CamB,rvec_CamB = B_tvecs[1],B_rvecs[1]
     RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
     H_CamB = R_t2H(RoMat_B,tvec_CamB)
@@ -199,7 +199,7 @@ def calibration(calibrate_frame,points_perFrame):
     
     if num_of_cameras > 2:
         #=====================it seems not all cornors are detected in view C
-        K_CamC,C_dist,C_rvecs,C_tvecs,C_corners = charuco_detect('Calibration/CamC_Calibration/*.jpg','C',video_resolution)
+        K_CamC,C_dist,C_rvecs,C_tvecs,C_corners = charuco_detect(baseFilePath+'/Calibration/'+cam3+'_Calibration/*jpg',cam3,video_resolution)
         tvec_CamC,rvec_CamC = C_tvecs[1],C_rvecs[1]
         RoMat_C, _ = cv2.Rodrigues(rvec_CamC) #convert 
         H_CamC = R_t2H(RoMat_C,tvec_CamC)
@@ -207,7 +207,7 @@ def calibration(calibrate_frame,points_perFrame):
     
     if num_of_cameras > 3:
         #=====================it seems not all cornors are detected in view C
-        K_CamD,D_dist,D_rvecs,D_tvecs,D_corners = charuco_detect('Calibration/CamC_Calibration/*.jpg','D',video_resolution)
+        K_CamD,D_dist,D_rvecs,D_tvecs,D_corners = charuco_detect(baseFilePath+'/Calibration/'+cam4+'_Calibration/*jpg',cam4,video_resolution)
         tvec_CamD,rvec_CamD = D_tvecs[1],D_rvecs[1]
         RoMat_D, _ = cv2.Rodrigues(rvec_CamD) #convert 
         H_CamD = R_t2H(RoMat_D,tvec_CamD)
