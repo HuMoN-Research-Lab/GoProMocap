@@ -329,73 +329,6 @@ class triangulateTest:
 
 
 
-#=====================pick best angle version and discard
-class triangulateFlex:
-    """
-    ImgPoints: a (frame,#_of_keypoints,#_of_views,3) matrix -> (x,y,prob)
-    ProjectMat: a Mx3x4 matrix, M is number of views, each views has its 3x4 projection matrix
-    """
-    
-    def __init__(self,ImgPoints,ProjectMat,base_cam):
-        
-        self.ImgPoints = ImgPoints
-        self.ProjectMat = ProjectMat
-        self.base_cam = base_cam
-    
-
-    def solveA(self): 
-
-        if self.ImgPoints.shape[2] != len(self.ProjectMat):
-            raise Exceptions('number of views must be equal to number of projection matrix')
-        
-        N_views = len(self.ProjectMat)
-        A = np.zeros((N_views*2,4)) #prepare svd matrix A
-        X = np.zeros((self.ImgPoints.shape[0],self.ImgPoints.shape[1],4))
-        #vis_list = {}
-        vis_list = []
-        valid_point_list = []
-        
-        for i in range(self.ImgPoints.shape[0]): #for each point
-            
-            for k in range(self.ImgPoints.shape[1]):
-                
-                v_indx,max_ = -1.0,-1.0
-                for view_index in range(self.ImgPoints.shape[2]):
-                    if view_index == self.base_cam:
-                        continue
-                    elif self.ImgPoints[i,k,view_index,2] > max_:
-                        max_ = self.ImgPoints[i,k,view_index,2]
-                        v_indx = view_index
-                
-                #vis_list[(i,k)] = v_indx
-                vis_list.append(v_indx)
-                
-                #========================remove point module
-                if min(self.ImgPoints[i,k,self.base_cam,2],self.ImgPoints[i,k,v_indx,2]) < 0.4:
-                    valid_point_list.append(0)
-                else:
-                    valid_point_list.append(1)
-                
-                view_list = [self.base_cam,v_indx] #for each frame
-                
-                for j in view_list: #for each view            
-                    u,v = self.ImgPoints[i,k,j,0],self.ImgPoints[i,k,j,1] #initialize x,y points
-                    
-                    for col in range(4):
-                        A[j*2+0,col] = u*self.ProjectMat[j,2,col] - self.ProjectMat[j,0,col]
-                        A[j*2+1,col] = v*self.ProjectMat[j,2,col] - self.ProjectMat[j,1,col]
-        
-                A1 = np.zeros((4,4))
-                A1[0,:] = A[view_list[0]*2,:]
-                A1[1,:] = A[view_list[0]*2+1,:]
-                A1[2,:] = A[view_list[1]*2,:]
-                A1[3,:] = A[view_list[1]*2+1,:]
-                U,s,V = np.linalg.svd(A1)
-                P = V[-1,:] / V[-1,-1]
-                #X[i] = P[:-1]
-                X[i,k] = P
-        
-        return X,vis_list,valid_point_list
 
 
 
@@ -467,12 +400,24 @@ def aruco_detect(path,Cam_indx,video_resolution):
 
 def charuco_detect(path,Cam_index,video_resolution):
     """
-    CALIBRATE CAMERA USING CHARUCO BOARD
+    calibrate each single camera using charuco board
+    path: the path to the calibration folder of one cameram for example:'Calibration/CamA_Calibration/*.jpg'
+    Cam_index:A/B/C/D
+    video_resolution:a tuple like (1080,1920)
+    
+    return: 
+    mtx: 3 by 3 camrea matrix that map camera's 2D coordinate system to image coordinate system(origin at top left corner)
+    dist: distortion matrix
+    rvecs: (3 by 1) rotation vector
+    tvecs: (3 by 1) translation vector
+    allCorners: pixel coordinates of charuco board corners,
+    allIds: coresponding IDs of each corner
     """
     
     aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_250)
     board = aruco.CharucoBoard_create(7, 5, 1, .8, aruco_dict)
     images = glob.glob(path)
+
 
 
     def read_chessboards(images):
@@ -496,7 +441,7 @@ def charuco_detect(path,Cam_index,video_resolution):
                 # SUB PIXEL DETECTION
                 for corner in corners:
                     cv2.cornerSubPix(gray, corner,
-                                    winSize = (3,3),
+                                    winSize = (5,5),
                                     zeroZone = (-1,-1),
                                     criteria = criteria)
                 res2 = cv2.aruco.interpolateCornersCharuco(corners,ids,gray,board)
@@ -542,9 +487,14 @@ def charuco_detect(path,Cam_index,video_resolution):
     tvecs = np.array(tvecs)
     mtx = np.array(mtx)
     rvecs = np.array(rvecs)
+    
+    if len(tvecs) > 1:
+        tvecs = tvecs[0]
+    if len(rvecs) > 1:
+        rvecs = rvecs[0]
+        
+    return mtx,dist,rvecs,tvecs,allCorners,allIds
 
-
-    return mtx,dist,rvecs,tvecs
 
 
 
