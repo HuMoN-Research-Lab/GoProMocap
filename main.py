@@ -182,36 +182,110 @@ else:
 
 #==================load charucoboard pixel data
 
-def calibration(calibrate_frame,points_perFrame):
+def calibration(calibrate_frame):
+    """
+    calibrate all cameras using charuco board
+    
+    input variable:
+    calibrate_frame:number of frames avaiavle in the calibration folder, all camera should have the same number of calibration frames
+    
+    return:
+    A tuple of all (3X4) projecion matrix
+    """
+    
+    
+    def Charuco_Corners_filter(allIds,allCorners):
+        """
+        input should be corners and ids of all cameras. pick the ids with shortest length and then recollect the corners.
+        """
 
-    K_CamA,A_dist,A_rvecs,A_tvecs,A_corners = charuco_detect(baseFilePath+'/Calibration/'+cam1+'_Calibration/*jpg',cam1,video_resolution)#this function in ops line 437
-    tvec_CamA,rvec_CamA = A_tvecs[1],A_rvecs[1]#tvec/rvec generated 1 per image in the calibration folder, so we only need one of them
+        def dict_builder(ids, corners):
+            """
+            create a dictionary that each Id holds its corresponding pixel coordinates
+            """
+            if len(ids) != len(corners):
+                raise Exceptions('ids must match corners')
+        
+            ids = ids.reshape((-1,))
+            ret = {}
+            ind = 0 
+            for id in ids:
+                ret[id] = corners[ind]
+                ind += 1
+
+            return ret
+
+        A_allIds,B_allIds,C_allIds,D_allIds = allIds
+        A_Corners,B_Corners,C_Corners,D_Corners = allCorners
+
+        A_len,B_len,C_len,D_len = len(A_allIds),len(B_allIds),len(C_allIds),len(D_allIds)
+        A_Corners,B_Corners,C_Corners,D_Corners = A_Corners.reshape((A_len,2)),B_Corners.reshape((B_len,2)),C_Corners.reshape((C_len,2)),D_Corners.reshape((D_len,2))
+
+        A_dict,B_dict,C_dict,D_dict = dict_builder(A_allIds,A_Corners),dict_builder(B_allIds,B_Corners),dict_builder(C_allIds,C_Corners),dict_builder(D_allIds,D_Corners)
+
+        #in the case of 4 camera and the shortest length of ids is 20. the final result of this funciton should be four (20,2) array.
+        my_list = [A_len,B_len,C_len,D_len]
+
+        val, idx = min((val, idx) for (idx, val) in enumerate(my_list))#return the shortest length and its index(camera indx)
+        #ta,tb = min((2.1,22),(2,-1000000))
+        #print('test',ta,tb)
+        print(idx,':',val)
+
+        A,B,C,D = np.zeros((val,2)),np.zeros((val,2)),np.zeros((val,2)),np.zeros((val,2))
+
+        target_ids = allIds[idx].reshape((-1,))
+    
+        c = 0
+    
+        for i in target_ids:
+            A[c],B[c],C[c],D[c] = A_dict[i].reshape((2)),B_dict[i].reshape((2)),C_dict[i].reshape((2)),D_dict[i].reshape((2))
+            c+= 1
+        A,B,C,D = A.reshape((1,val,2)),B.reshape((1,val,2)),C.reshape((1,val,2)),D.reshape((1,val,2))
+        num_of_points = val
+        
+        return A,B,C,D,num_of_points
+    
+    
+    #CamA
+    K_CamA,A_dist,A_rvecs,A_tvecs,A_corners, A_allIds = charuco_detect(baseFilePath+'/Calibration/'+cam1+'_Calibration/*jpg',cam1,video_resolution)#this function in ops line 437
+    A_corners = np.array(A_corners)
+    tvec_CamA,rvec_CamA = A_tvecs,A_rvecs#tvec/rvec generated 1 per image in the calibration folder, so we only need one of them
     RoMat_A, _ = cv2.Rodrigues(rvec_CamA)#convert (3,1) rvec to (3,3) rotation matrix
     H_CamA = R_t2H(RoMat_A,tvec_CamA)#this funciton in ops line 87, combine rotation matrix and tvec into a Homogeniens transformation matrix
-    A_corners = A_corners.reshape((2,points_perFrame,2))
+    
 
-
-    K_CamB,B_dist,B_rvecs,B_tvecs,B_corners = charuco_detect(baseFilePath+'/Calibration/'+cam2+'_Calibration/*jpg',cam2,video_resolution)
-    tvec_CamB,rvec_CamB = B_tvecs[1],B_rvecs[1]
+    #CamB
+    K_CamB,B_dist,B_rvecs,B_tvecs,B_corners,B_allIds = charuco_detect(baseFilePath+'/Calibration/'+cam2+'_Calibration/*jpg',cam2,video_resolution)
+    B_corners = np.array(B_corners)
+    tvec_CamB,rvec_CamB = B_tvecs,B_rvecs
     RoMat_B, _ = cv2.Rodrigues(rvec_CamB) #convert 
     H_CamB = R_t2H(RoMat_B,tvec_CamB)
-    B_corners = B_corners.reshape((2,points_perFrame,2))
     
-    if num_of_cameras > 2:
-        #=====================it seems not all cornors are detected in view C
-        K_CamC,C_dist,C_rvecs,C_tvecs,C_corners = charuco_detect(baseFilePath+'/Calibration/'+cam3+'_Calibration/*jpg',cam3,video_resolution)
-        tvec_CamC,rvec_CamC = C_tvecs[1],C_rvecs[1]
-        RoMat_C, _ = cv2.Rodrigues(rvec_CamC) #convert 
-        H_CamC = R_t2H(RoMat_C,tvec_CamC)
-        C_corners = C_corners.reshape((2,points_perFrame,2))
+    #CamC
+    K_CamC,C_dist,C_rvecs,C_tvecs,C_corners,C_allIds = charuco_detect(baseFilePath+'/Calibration/'+cam3+'_Calibration/*jpg',cam3,video_resolution)
+    C_corners = np.array(C_corners)
+    tvec_CamC,rvec_CamC = C_tvecs[1],C_rvecs[1]
+    RoMat_C, _ = cv2.Rodrigues(rvec_CamC) #convert 
+    H_CamC = R_t2H(RoMat_C,tvec_CamC)
+
     
-    if num_of_cameras > 3:
-        #=====================it seems not all cornors are detected in view C
-        K_CamD,D_dist,D_rvecs,D_tvecs,D_corners = charuco_detect(baseFilePath+'/Calibration/'+cam4+'_Calibration/*jpg',cam4,video_resolution)
-        tvec_CamD,rvec_CamD = D_tvecs[1],D_rvecs[1]
-        RoMat_D, _ = cv2.Rodrigues(rvec_CamD) #convert 
-        H_CamD = R_t2H(RoMat_D,tvec_CamD)
-        D_corners = D_corners.reshape((2,points_perFrame,2))
+    #CamD
+    K_CamD,D_dist,D_rvecs,D_tvecs,D_corners,D_allIds = charuco_detect(baseFilePath+'/Calibration/'+cam4+'_Calibration/*jpg',cam4,video_resolution)
+    D_corners = np.array(D_corners)
+    tvec_CamD,rvec_CamD = D_tvecs[1],D_rvecs[1]
+    RoMat_D, _ = cv2.Rodrigues(rvec_CamD) #convert 
+    H_CamD = R_t2H(RoMat_D,tvec_CamD)
+    
+    
+    (A_allIds,B_allIds,C_allIds,D_allIds) = np.array(A_allIds),np.array(B_allIds),np.array(C_allIds),np.array(D_allIds)
+    (A_Corners,B_Corners,C_Corners,D_Corners) = np.array(A_corners),np.array(B_corners),np.array(C_corners),np.array(D_corners)
+
+    allIds = (A_allIds[0],B_allIds[0],C_allIds[0],D_allIds[0])
+    allCorners = (A_Corners[0],B_Corners[0],C_Corners[0],D_Corners[0])
+    
+    #-======filtered pixel coordinates
+    A_corners,B_corners,C_corners,D_corners,calibration_points = Charuco_Corners_filter(allIds,allCorners)
+    
 
     if optimize_projection_matrix:
         if num_of_cameras == 2:
@@ -221,14 +295,16 @@ def calibration(calibrate_frame,points_perFrame):
             Proj_Mat = np.stack((PA,PB),axis=0)
             BA_points2D = np.stack((A_corners,B_corners),axis = 0)
             input_param = np.hstack((PA.ravel(),PB.ravel()))
-         elif num_of_cameras == 3:
+         
+        elif num_of_cameras == 3:
             MA,MB,MC = get_TransMat(H_CamA,H_CamB,H_CamC)
             PA,PB,PC = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC)
             Proj_points = np.stack((A_corners,B_corners,C_corners),axis = 2)#project points format should be (frame,#_of_keypoints,#_of_views,3), in this case (2,24,2,2)
             Proj_Mat = np.stack((PA,PB,PC),axis=0)
             BA_points2D = np.stack((A_corners,B_corners,C_corners),axis = 0)
             input_param = np.hstack((PA.ravel(),PB.ravel(),PC.ravel()))
-         elif num_of_cameras == 4:
+         
+        elif num_of_cameras == 4:
             MA,MB,MC,MD = get_TransMat(H_CamA,H_CamB,H_CamC,H_Cam_D)
             PA,PB,PC = np.dot(K_CamA,MA),np.dot(K_CamB,MB),np.dot(K_CamC,MC),np.dot(K_CamD,MD)
             Proj_points = np.stack((A_corners,B_corners,C_corners,D_corners),axis = 2)#project points format should be (frame,#_of_keypoints,#_of_views,3), in this case (2,24,2,2)
@@ -243,8 +319,8 @@ def calibration(calibrate_frame,points_perFrame):
     input_points = coords.reshape((-1,))
     ba_input = np.hstack((input_points,input_param))
 
-    VIS_cam_List = [0]*calibrate_frame*points_perFrame
-    refined_points,refined_Pmat = SBA(calibrate_frame,BA_points2D,ba_input,VIS_cam_List,points_perFrame,'A')
+    VIS_cam_List = [0]*calibrate_frame*calibration_points #always assume camera is the principle view
+    refined_points,refined_Pmat = SBA(calibrate_frame,BA_points2D,ba_input,VIS_cam_List,calibration_points,'A')
 
 
     l = len(refined_Pmat)//num_of_cameras
@@ -325,8 +401,8 @@ def run(ProjectMatix):
 
     coords = triangulate(Proj_points,Proj_Mat).solveA()#tranigulate points
     coords = coords[:,:,:-1]
-    np.save(SAVE_FOLDER+'3Dcoords.npy',coords)
-    print('3D coordinates saved'
+    np.save(baseFilePath+'/Processed/DataPoints3D.npy',coords)
+    print('3D coordinates saved')
           
     return coords
                                                                                
@@ -348,22 +424,20 @@ def run(ProjectMatix):
 # print('save sussesful')
 
 if __name__ == "__main__":
-    ProjectMatix = calibration(2,24)
-    run(ProjectMatix)
-
-    np.save(baseFilePath+'/Processed/DataPoints3D.npy',coords)
-    print('save sussesful')
+    ProjectMatix = calibration(2)
+    coords = run(ProjectMatix)
 
 
     if num_of_cameras == 3:
         Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],coords).display()
 
     elif num_of_cameras == 2:
-        #Vis(SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[0][0],None,C).display()
+   
         Vis(SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[0][0],None,coords).display()
 
     elif num_of_cameras == 4:
-        Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],coords).display()
+        Vis(SourceVideoFolder+'/'+Source_video_List[0][0],SourceVideoFolder+'/'+Source_video_List[1][0],SourceVideoFolder+'/'+Source_video_List[2][0],SourceVideoFolder+'/'+Source_video_List[3][0],coords).display()
+
     
 
 
