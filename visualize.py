@@ -133,7 +133,7 @@ class Vis:
                 im12.remove()
                 im13.remove()
                 im14.remove()
-
+                 
 
                 c+=1
         
