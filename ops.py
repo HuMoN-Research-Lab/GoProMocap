@@ -38,40 +38,47 @@ class Exceptions(Exception):
     pass
 
 
-def get_TransMat(base_H,H1,H2=None,H3=None):
+
+
+
+def get_TransMat(H_mats):
+    
     """
+    input: set of 4x4 homogenies transformation matrixs(charuco board is the original)
+    output: list of  3x4 projection matrixs, has same length with the input
+
     calculate homogeneous transformation matrix between base Cam and the other cameras
     and calculate the projection matrix of all cameras
-
     """
+
+    if num_of_cameras != len(H_mats):
+        raise Exceptions('number of homogenies transformation matrixs must equal to number of cameras')
+
+    #the first homogenies transformation matrixs is used to calculate the relative position to the principle camera(first camera)
+    H0 = H_mats[0]
+    #the principle camera have projection matrix with rotation matrix to be a diagonal matrix, translation vector to be (0,0,0)
     M_base = np.hstack((np.eye(3, 3), np.zeros((3, 1))))
-    H_base_1 = H1.dot(inverseH(base_H))
 
-    T1 = H_base_1[:3,-1].reshape(3,1)
-    R1 = H_base_1[:3,:3]
-    M1 = np.hstack((R1, T1))
+    ret = []
+    ret.append(M_base)
+
+    #calculate each cameras relative position to the principle camera
+    for i in range(1,num_of_cameras):
+        H_temp = H_mats[i]
+        #H is the relative postion of camera i to the principle camera
+        H = H_temp.dot(inverseH(H0))
+        #extract rotation and translation vector from the calculated projection matrx
+        T,R = H[:3,-1].reshape(3,1),H[:3,:3]
+        M = np.hstack((R, T))
+
+        ret.append(M)
+
+    assert len(ret) == num_of_cameras
     
-    if num_of_cameras == 2 :
-        return M_base,M1
-    elif num_of_cameras == 3:
-        H_base_2 = H2.dot(inverseH(base_H))
-        T2 = H_base_2[:3,-1].reshape(3,1)
-        R2 = H_base_2[:3,:3]
-        M2 = np.hstack((R2, T2))
+    return ret
 
-        return M_base,M1,M2
-    elif num_of_cameras == 4:
-        H_base_2 = H2.dot(inverseH(base_H))
-        T2 = H_base_2[:3,-1].reshape(3,1)
-        R2 = H_base_2[:3,:3]
-        M2 = np.hstack((R2, T2))
 
-        H_base_3 = H3.dot(inverseH(base_H))
-        T3 = H_base_3[:3,-1].reshape(3,1)
-        R3 = H_base_3[:3,:3]
-        M3 = np.hstack((R3, T3))
 
-        return M_base,M1,M2,M3
 
 
 
@@ -109,6 +116,8 @@ def R_t2H(R,T):
     return ret
 
 
+
+#calibration funciton(chessboard)
 def get_RT_mtx(path,Cam_indx,video_resolution):
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -152,71 +161,53 @@ def get_RT_mtx(path,Cam_indx,video_resolution):
 
     #=================store camera information
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-    if not os.path.exists(baseProjectPath + '/Calibration/CameraINFO'):
-        os.mkdir(baseProjectPath + '/Calibration/CameraINFO')
-    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_ret.npy',ret)
-    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_mtx.npy',mtx)
-    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_dist.npy',dist)
-    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_rvec.npy',rvecs)
-    np.save(baseProjectPath+'/Calibration/CameraINFO/'+str(Cam_indx)+'_tvecs.npy',tvecs)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_ret.npy',ret)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_mtx.npy',mtx)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_dist.npy',dist)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_rvec.npy',rvecs)
+    np.save('CameraINFO/Cam'+str(Cam_indx)+'_tvecs.npy',tvecs)
 
     return ret,mtx,dist,rvecs,tvecs
 
 
 
 
-def video_loader(fileName,Cam_Indx):
-    """
-    Cam_Index: CamA/CamB/CamC, depand on how many cameras are used during recording
-    """
-    
-    print(configVariables, 'OPS')
-    if not os.path.exists(baseProjectPath + '/Calibration'):
-        os.mkdir(baseProjectPath + '/Calibration')
-    calibratefilepath = baseProjectPath + '/Calibration'
 
-    DATADIR_1 = SourceVideoFolder
-    datadir =[DATADIR_1]
-    video_array = []
+def video_loader(video_path):
+    files = os.listdir(video_path)
+    path = []
+    for p in files:
+        if not p.startswith('.'):
+            path.append(p)
+
+    path.sort(key=lambda f: int(re.sub('\D', '', f)))#sort path
+    print(path)
     
-    for dir in datadir:
-        for video in os.listdir(dir):
-            print(video)
-            print(fileName)
-            if video == fileName:
+    for i in range(len(path)):
+        vidcap = cv2.VideoCapture(os.path.join(video_path,path[i]))
+        success,image = vidcap.read()
+        count = 0
+
+        while success:
+            success,image = vidcap.read()
+            if success:
+                height , width , layers =  image.shape
+                resize = cv2.resize(image, video_resolution) 
+                #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                #single_video.append(image)
+                if count < 2:
+                    cv2.imwrite("Calibration/"+str(i+1)+"/frame%d.jpg" % count, resize)     # save frame as JPEG file
+                    print(resize.shape)
+                else:
+                    break
                 
-                vidcap = cv2.VideoCapture(os.path.join(dir,video))
-                
-                vidWidth  = vidcap.get(cv2.CAP_PROP_FRAME_WIDTH)  
-                vidHeight = vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT) 
-                video_resolution = (int(vidWidth),int(vidHeight))
-                success,image = vidcap.read()
-                count = 0
-                #success = True
-
-                while success:
-                    success,image = vidcap.read()
-                    if success:
-                        height , width , layers =  image.shape
-                        resize = cv2.resize(image, video_resolution) 
-                        #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                        #single_video.append(image)
-                        if count < 20:   
-                            if not os.path.exists(baseProjectPath + '/Calibration/'+Cam_Indx+'_Calibration'):
-                                os.mkdir(baseProjectPath + '/Calibration/'+Cam_Indx+'_Calibration')                       
-                            cv2.imwrite(baseProjectPath+'/Calibration/'+Cam_Indx+'_Calibration/frame%d.jpg' %count , image)     # save frame as JPEG file
-                            #print(resize.shape)
-                        else:
-                            break
-
-    
-                        print('Read a new frame: ', success)
-                        count += 1
-                        print(count)
-                    else:
-                        break
+                print('Read a new frame: ', success)
+                count += 1
+                print(count)
+            
+            else:
+                break
     return video_resolution
-
 
 
 
@@ -238,12 +229,11 @@ class triangulate:
             raise Exceptions('number of views must be equal to number of projection matrix')
         
         N_views = len(self.ProjectMat)
-        N_Combinations = len(list(combinations(range(N_views),2)))
-        Q =[]
-        c = np.zeros((N_views*2,4)) #prepare svd matrix A
+        A = np.zeros((N_views*2,4)) #prepare svd matrix A
         X = np.zeros((self.ImgPoints.shape[0],self.ImgPoints.shape[1],4))
+
         for i in range(self.ImgPoints.shape[0]): #for each point
-            T=[]   
+            
             for k in range(self.ImgPoints.shape[1]):
                 #if the lowest p-value of the obersvations is less than 0.9, skip the calculation
                 if float(min(list(self.ImgPoints[i,k,:,-1]))) < -1:
@@ -253,9 +243,11 @@ class triangulate:
                     u,v = self.ImgPoints[i,k,j,0],self.ImgPoints[i,k,j,1] #initialize x,y points
                     
                     for col in range(4):
-                        c[j*2+0,col] = u*self.ProjectMat[j,2,col] - self.ProjectMat[j,0,col]
-                        c[j*2+1,col] = v*self.ProjectMat[j,2,col] - self.ProjectMat[j,1,col]
-                U,s,V = np.linalg.svd(c)
+                        A[j*2+0,col] = u*self.ProjectMat[j,2,col] - self.ProjectMat[j,0,col]
+                        A[j*2+1,col] = v*self.ProjectMat[j,2,col] - self.ProjectMat[j,1,col]
+     
+
+                U,s,V = np.linalg.svd(A)
                 P = V[-1,:] / V[-1,-1]
                 #X[i] = P[:-1]
                 X[i,k] = P
@@ -397,22 +389,8 @@ def aruco_detect(path,Cam_indx,video_resolution):
             cv2.putText(img, "No Ids", (0,64), font, 1, (0,255,0),2,cv2.LINE_AA)
 
 
-
-def charuco_detect(path,Cam_index,video_resolution):
-    """
-    calibrate each single camera using charuco board
-    path: the path to the calibration folder of one cameram for example:'Calibration/CamA_Calibration/*.jpg'
-    Cam_index:A/B/C/D
-    video_resolution:a tuple like (1080,1920)
-    
-    return: 
-    mtx: 3 by 3 camrea matrix that map camera's 2D coordinate system to image coordinate system(origin at top left corner)
-    dist: distortion matrix
-    rvecs: (3 by 1) rotation vector
-    tvecs: (3 by 1) translation vector
-    allCorners: pixel coordinates of charuco board corners,
-    allIds: coresponding IDs of each corner
-    """
+#=================calibration using charucoboard
+def charuco_detect(path,video_resolution):
     
     aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_250)
     board = aruco.CharucoBoard_create(7, 5, 1, .8, aruco_dict)
@@ -488,12 +466,8 @@ def charuco_detect(path,Cam_index,video_resolution):
     mtx = np.array(mtx)
     rvecs = np.array(rvecs)
     
-    if len(tvecs) > 1:
-        tvecs = tvecs[0]
-    if len(rvecs) > 1:
-        rvecs = rvecs[0]
-        
-    return mtx,dist,rvecs,tvecs,allCorners,allIds
+
+    return mtx,dist,rvecs[0],tvecs[0],allCorners[0],allIds[0]
 
 
 
